@@ -977,6 +977,7 @@
                 "InstanceType": {
                     "Ref": "InstanceType"
                 },
+                "InstanceMonitoring": false,
                 "IamInstanceProfile": {
                     "Ref": "WordPressProfile"
                 },
