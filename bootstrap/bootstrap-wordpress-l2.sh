@@ -4,15 +4,15 @@
 INSTANCE_ID=$(curl http://169.254.169.254/latest/meta-data/instance-id)
 REGION=$(curl http://169.254.169.254/latest/dynamic/instance-identity/document|grep region|awk -F\" '{print $4}')
 
-# Populate some variables from tags (need jq installed first)
-NAME=$(aws ec2 describe-tags --region us-east-1 --filters "Name=key,Values=Name" "Name=resource-id,Values=$INSTANCE_ID" | jq .Tags[0].Value -r)
-STACK_NAME=$(aws ec2 describe-tags --region us-east-1 --filters "Name=key,Values=StackName" "Name=resource-id,Values=$INSTANCE_ID" | jq .Tags[0].Value -r)
-
 # Run system updates
 yum -y update
 
 # Install jq
 yum -y install jq
+
+# Populate some variables from tags (need jq installed first)
+NAME=$(aws ec2 describe-tags --region us-east-1 --filters "Name=key,Values=Name" "Name=resource-id,Values=$INSTANCE_ID" | jq .Tags[0].Value -r)
+STACK_NAME=$(aws ec2 describe-tags --region us-east-1 --filters "Name=key,Values=StackName" "Name=resource-id,Values=$INSTANCE_ID" | jq .Tags[0].Value -r)
 
 # Create user accounts for administrators
 if ! [ -z "$ADMIN_GROUP" ]
@@ -62,43 +62,64 @@ cd /etc/pki/tls/certs
 yum install -y mod_ssl
 wget --no-cache -O /etc/httpd/conf.d/ssl.conf https://raw.githubusercontent.com/mcsheaj/aws-playground/master/scripts/ssl-l2.conf
 
+mkdir -p /root/.aws
+chmod 700 /root/.aws
+
 cd /tmp
+rm -rf /var/www/bak
+mkdir /var/www/bak
 
 # Get intellipoint wordpress files from S3 and move to /var/www/html
 BACKUP=$(aws s3api list-objects --bucket ${AWS_BUCKET} --prefix backup/intellipoint-hourly/intellipoint-hourly --query "Contents[?contains(Key, '.tar.gz')] | reverse(sort_by(@, &LastModified)) | [0]" | jq .Key -r)
 aws s3 cp s3://${AWS_BUCKET}/${BACKUP} /tmp/intellipointsolutions.com.tar.gz
 tar -xzf intellipointsolutions.com.tar.gz
-sed -i "s/define( 'DB_USER', '.*' );/define('DB_USER, '$DB_USER');/" intellipointsolutions.com/html/wp-config.php
-sed -i "s/define( 'DB_PASSWORD', '.*' );/define('DB_PASSWORD, '$DB_PASSWORD');/" intellipointsolutions.com/html/wp-config.php
-sed -i "s/define( 'DB_NAME', '.*' );/define('DB_NAME, '$DB_DATABASE');/" intellipointsolutions.com/html/wp-config.php
-sed -i "s/define( 'DB_HOST', '.*' );/define('DB_HOST, 'DB_SERVER');/" intellipointsolutions.com/html/wp-config.php
+rm -rf intellipointsolutions.com.tar.gz
+sed -i "s/define( *'DB_USER', '.*' *);/define( 'DB_USER', '${DB_USER}' );/" intellipointsolutions.com/html/wp-config.php
+sed -i "s/define( *'DB_PASSWORD', '.*' *);/define( 'DB_PASSWORD', '${DB_PASSWORD}' );/" intellipointsolutions.com/html/wp-config.php
+sed -i "s/define( *'DB_NAME', '.*' *);/define( 'DB_NAME', '${DB_DATABASE}' );/" intellipointsolutions.com/html/wp-config.php
+sed -i "s/define( *'DB_HOST', '.*' *);/define( 'DB_HOST', '${DB_SERVER}' );/" intellipointsolutions.com/html/wp-config.php
 echo "<?php phpinfo() ?>" > intellipointsolutions.com/html/info.php
 chown -R apache:apache intellipointsolutions.com
-mv -n intellipointsolutions.com /var/www
+mv -f /var/www/intellipointsolutions.com /var/www/bak
+mv -f intellipointsolutions.com /var/www
+rm -rf intellipointsolutions.com
 
 # Get joemcshea.intellipoint files from S3 and move to /var/www/joemcshea.intellipointsolutions.com
 BACKUP=$(aws s3api list-objects --bucket ${AWS_BUCKET} --prefix backup/joemcshea-hourly/joemcshea-hourly --query "Contents[?contains(Key, '.tar.gz')] | reverse(sort_by(@, &LastModified)) | [0]" | jq .Key -r)
-aws s3 cp s3://${AWS_BUCKET}/${BACKUP} /tmp/intellipointsolutions.com.tar.gz
+aws s3 cp s3://${AWS_BUCKET}/${BACKUP} /tmp/joemcshea.intellipointsolutions.com.tar.gz
 tar -xzf joemcshea.intellipointsolutions.com.tar.gz
-sed -i "s/define( 'DB_USER', '.*' );/define('DB_USER, '$DB_USER');/" joemcshea.intellipointsolutions.com/html/wp-config.php
-sed -i "s/define( 'DB_PASSWORD', '.*' );/define('DB_PASSWORD, '$DB_PASSWORD');/" joemcshea.intellipointsolutions.com/html/wp-config.php
-sed -i "s/define( 'DB_NAME', '.*' );/define('DB_NAME, '$DB_DATABASE');/" joemcshea.intellipointsolutions.com/html/wp-config.php
-sed -i "s/define( 'DB_HOST', '.*' );/define('DB_HOST, 'DB_SERVER');/" joemcshea.intellipointsolutions.com/html/wp-config.php
+rm -rf joemcshea.intellipointsolutions.com.tar.gz
+sed -i "s/define( *'DB_USER', '.*' *);/define( 'DB_USER', '${DB_USER}' );/" joemcshea.intellipointsolutions.com/html/wp-config.php
+sed -i "s/define( *'DB_PASSWORD', '.*' *);/define( 'DB_PASSWORD', '${DB_PASSWORD}' );/" joemcshea.intellipointsolutions.com/html/wp-config.php
+sed -i "s/define( *'DB_NAME', '.*' *);/define( 'DB_NAME', '${DB_DATABASE}_joemcshea' );/" joemcshea.intellipointsolutions.com/html/wp-config.php
+sed -i "s/define( *'DB_HOST', '.*' *);/define( 'DB_HOST', '${DB_SERVER}' );/" joemcshea.intellipointsolutions.com/html/wp-config.php
 echo "<?php phpinfo() ?>" > joemcshea.intellipointsolutions.com/html/info.php
 chown -R apache:apache joemcshea.intellipointsolutions.com
-mv -n joemcshea.intellipointsolutions.com /var/www
+mv -f /var/www/joemcshea.intellipointsolutions.com /var/www/bak
+mv -f joemcshea.intellipointsolutions.com /var/www
+rm -rf joemcshea.intellipointsolutions.com
 
 # Get speasyforms.intellipoint files from S3 and move to /var/www/speasyforms.intellipointsolutions.com
 BACKUP=$(aws s3api list-objects --bucket ${AWS_BUCKET} --prefix backup/speasyforms-hourly/speasyforms-hourly --query "Contents[?contains(Key, '.tar.gz')] | reverse(sort_by(@, &LastModified)) | [0]" | jq .Key -r)
-aws s3 cp s3://${AWS_BUCKET}/${BACKUP} /tmp/intellipointsolutions.com.tar.gz
+aws s3 cp s3://${AWS_BUCKET}/${BACKUP} /tmp/speasyforms.intellipointsolutions.com.tar.gz
 tar -xzf speasyforms.intellipointsolutions.com.tar.gz
-sed -i "s/define( 'DB_USER', '.*' );/define('DB_USER, '$DB_USER');/" speasyforms.intellipointsolutions.com/html/wp-config.php
-sed -i "s/define( 'DB_PASSWORD', '.*' );/define('DB_PASSWORD, '$DB_PASSWORD');/" speasyforms.intellipointsolutions.com/html/wp-config.php
-sed -i "s/define( 'DB_NAME', '.*' );/define('DB_NAME, '$DB_DATABASE');/" speasyforms.intellipointsolutions.com/html/wp-config.php
-sed -i "s/define( 'DB_HOST', '.*' );/define('DB_HOST, 'DB_SERVER');/" speasyforms.intellipointsolutions.com/html/wp-config.php
+rm -rf speasyforms.intellipointsolutions.com.tar.gz
+sed -i "s/define( *'DB_USER', '.*' *);/define( 'DB_USER', '${DB_USER}' );/" speasyforms.intellipointsolutions.com/html/wp-config.php
+sed -i "s/define( *'DB_PASSWORD', '.*' *);/define( 'DB_PASSWORD', '${DB_PASSWORD} ');/" speasyforms.intellipointsolutions.com/html/wp-config.php
+sed -i "s/define( *'DB_NAME', '.*' *);/define( 'DB_NAME', '${DB_DATABASE}_speasyforms' );/" speasyforms.intellipointsolutions.com/html/wp-config.php
+sed -i "s/define( *'DB_HOST', '.*' *);/define( 'DB_HOST', '${DB_SERVER}' );/" speasyforms.intellipointsolutions.com/html/wp-config.php
 echo "<?php phpinfo() ?>" > speasyforms.intellipointsolutions.com/html/info.php
 chown -R apache:apache speasyforms.intellipointsolutions.com
-mv -n speasyforms.intellipointsolutions.com /var/www
+mv -f /var/www/speasyforms.intellipointsolutions.com /var/www/bak
+mv -f speasyforms.intellipointsolutions.com /var/www
+rm -rf speasyforms.intellipointsolutions.com
+
+# Setup the backup script
+wget --no-cache -O /etc/cron.d/wordpress_backup https://raw.githubusercontent.com/mcsheaj/aws-playground/master/scripts/wordpress_backup
+chmod 600 /etc/cron.d/wordpress_backup
+wget --no-cache -O /sbin/wpbackup.sh https://raw.githubusercontent.com/mcsheaj/aws-playground/master/scripts/wpbackup.sh
+chmod 700 /sbin/wpbackup.sh 
+systemctl restart crond
 
 # Start the httpd service and configure it to start on boot
 sudo systemctl enable httpd
@@ -112,13 +133,6 @@ then
 else
     NEW_NAME=$NAME
 fi
-
-# Setup the backup script
-wget --no-cache -O /etc/cron.d/wordpress_backup https://raw.githubusercontent.com/mcsheaj/aws-playground/master/scripts/wordpress_backup
-chmod 600 /etc/cron.d/wordpress_backup
-wget --no-cache -O /sbin/wpbackup.sh https://raw.githubusercontent.com/mcsheaj/aws-playground/master/scripts/wpbackup.sh
-chmod 700 /sbin/wpbackup.sh 
-systemctl restart crond
 
 # Update aws-cfn-bootstrap and call cfn-signal
 #yum update -y aws-cfn-bootstrap* | true
@@ -139,20 +153,18 @@ EOF
 chmod 600 /root/.aws/credentials
 
 cat << EOF > /root/.aws/bootstrap.properties
-ADMIN_GROUP=$ADMIN_GROUP
-MOTD_BANNER=$MOTD_BANNER
-DB_USER=$DB_USER
-DB_PASSWORD=$DB_PASSWORD
-DB_DATABASE=$DB_DATABASE
-DB_SERVER=$DB_SERVER
-AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
-AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
-AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION
-AWS_DEFAULT_OUTPUT=$AWS_DEFAULT_OUTPUT
-AWS_BUCKET=$AWS_BUCKET
+BOOT_ADMIN_GROUP=$ADMIN_GROUP
+BOOT_MOTD_BANNER=$MOTD_BANNER
+BOOT_DB_USER=$DB_USER
+BOOT_DB_PASSWORD=$DB_PASSWORD
+BOOT_DB_DATABASE=$DB_DATABASE
+BOOT_DB_SERVER=$DB_SERVER
+BOOT_AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+BOOT_AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+BOOT_AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION
+BOOT_AWS_DEFAULT_OUTPUT=$AWS_DEFAULT_OUTPUT
+BOOT_AWS_BUCKET=$AWS_BUCKET
 EOF
+sed -i "s/BOOT_//" /root/.aws/bootstrap.properties
 chmod 600 /root/.aws/bootstrap.properties
-
-mkdir -p /root/.aws
-chmod 700 /root/.aws
 
