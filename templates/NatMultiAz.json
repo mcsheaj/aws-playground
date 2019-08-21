@@ -1,0 +1,673 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "AWS CloudFormation template for a multiple availability zone NAT instance group (AWS Linux). Uses a script derived from Shing Chen's blog post 'AWS Auto-healing VPC NAT Instance' (https://schen1628.wordpress.com/2015/05/21/aws-auto-healing-vpc-nat-instance/). Also uses aws_ec2_ssh (Michael Wittig, https://github.com/widdix/aws-ec2-ssh) to create administrators accounts and setup SSH keys from their CodeCommit keys.",
+    "Metadata": {
+        "LICENSE": "MIT License, Copyright (c) 2019 Joe McShea, https://github.com/mcsheaj/aws-playground/blob/master/LICENSE",
+        "AWS::CloudFormation::Interface": {
+            "ParameterGroups": [
+                {
+                    "Label": {
+                        "default": "Virtual Private Cloud Settings"
+                    },
+                    "Parameters": [
+                        "VpcId",
+                        "VpcCidr",
+                        "PublicSubnets"
+                    ]
+                },
+                {
+                    "Label": {
+                        "default": "Instance Settings"
+                    },
+                    "Parameters": [
+                        "InstanceType",
+                        "InstanceCapacity"
+                    ]
+                },
+                {
+                    "Label": {
+                        "default": "Security Settings"
+                    },
+                    "Parameters": [
+                        "AdministratorsGroup",
+                        "KeyPairName",
+                        "MotdBanner"
+                    ]
+                }
+            ],
+            "ParameterLabels": {
+                "VpcId": {
+                    "default": "Virtual Private Cloud"
+                },
+                "VpcCidr": {
+                    "default": "VPC CIDR Range"
+                },
+                "PublicSubnets": {
+                    "default": "Public Subnets"
+                },
+                "PublicSubnetBCIDR": {
+                    "default": "Instance Type"
+                },
+                "InstanceCapacity": {
+                    "default": "Instance Capacity"
+                },
+                "AdministratorsGroup": {
+                    "default": "Administrators IAM Group"
+                },
+                "KeyPairName": {
+                    "default": "Key Pair"
+                },
+                "MotdBanner": {
+                    "default": "Login Banner"
+                }
+            }
+        }
+    },
+    "Parameters": {
+        "VpcId": {
+            "Type": "AWS::EC2::VPC::Id",
+            "Description": "VpcId of your existing Virtual Private Cloud (VPC)",
+            "ConstraintDescription": "Must be the VPC Id of an existing Virtual Private Cloud."
+        },
+        "VpcCidr": {
+            "Type": "String",
+            "Description": "the CIDR address range of the Virtual Private Cloud (VPC)",
+            "ConstraintDescription": "Must be the VPC CIDR range of an existing Virtual Private Cloud."
+        },
+        "PublicSubnets": {
+            "Type": "List<AWS::EC2::Subnet::Id>",
+            "Description": "The list of public SubnetIds in your Virtual Private Cloud (VPC)",
+            "ConstraintDescription": "Should be a list of at least two existing subnets associated with two different availability zones. They should be residing in the selected Virtual Private Cloud."
+        },
+        "InstanceType": {
+            "Description": "EC2 instance type",
+            "Type": "String",
+            "Default": "t3.nano",
+            "AllowedValues": [
+                "t1.micro",
+                "t2.nano",
+                "t2.micro",
+                "t2.small",
+                "t2.medium",
+                "t2.large",
+                "t3.nano",
+                "t3.micro",
+                "t3.small",
+                "t3.medium",
+                "t3.large",
+                "m1.small",
+                "m1.medium",
+                "m1.large",
+                "m1.xlarge",
+                "m2.xlarge",
+                "m2.2xlarge",
+                "m2.4xlarge",
+                "m3.medium",
+                "m3.large",
+                "m3.xlarge",
+                "m3.2xlarge",
+                "m4.large",
+                "m4.xlarge",
+                "m4.2xlarge",
+                "m4.4xlarge",
+                "m4.10xlarge",
+                "c1.medium",
+                "c1.xlarge",
+                "c3.large",
+                "c3.xlarge",
+                "c3.2xlarge",
+                "c3.4xlarge",
+                "c3.8xlarge",
+                "c4.large",
+                "c4.xlarge",
+                "c4.2xlarge",
+                "c4.4xlarge",
+                "c4.8xlarge",
+                "r3.large",
+                "r3.xlarge",
+                "r3.2xlarge",
+                "r3.4xlarge",
+                "r3.8xlarge",
+                "i2.xlarge",
+                "i2.2xlarge",
+                "i2.4xlarge",
+                "i2.8xlarge",
+                "d2.xlarge",
+                "d2.2xlarge",
+                "d2.4xlarge",
+                "d2.8xlarge",
+                "hi1.4xlarge",
+                "hs1.8xlarge",
+                "cr1.8xlarge",
+                "cc2.8xlarge",
+                "cg1.4xlarge"
+            ],
+            "ConstraintDescription": "Must be a valid EC2 instance type."
+        },
+        "InstanceCapacity": {
+            "Default": "1",
+            "Description": "The initial number of instances",
+            "Type": "Number",
+            "MinValue": "0",
+            "MaxValue": "1",
+            "ConstraintDescription": "Must be between 0 and 1 EC2 instances. Zero is allowed because we may only want to run one of these when performing administration, instead of 24/7 365."
+        },
+        "AdministratorsGroup": {
+            "Type": "String",
+            "Description": "Name of an IAM group from which user accounts will be created and keys copied if they've configured a CodeCommit key (required). By default, aws-ec2-ssh will pull in all IAM accounts as local accounts. I'd prefer to only pull IAM accounts from a particular IAM group, so this template won't even work if this isn't the name of a real IAM group (or at least, aws-ec2-ssh won't work).",
+            "ConstraintDescription": "must be the name of a valid IAM group, and if none of the users have CodeCommit keys there will be no way to connect to instances"
+        },
+        "KeyPairName": {
+            "Description": "Enter a Public/private key pair to use for the ec2-user account. If you do not have one in this region, please create it before continuing. This is a fallback way to connect in case aws-ec2-ssh doesn't work and you need to debug it. Only one person should have the private key, and it and the ec2-user account should be deleted once you've confirmed that aws-ec2-ssh worked.",
+            "Type": "AWS::EC2::KeyPair::KeyName"
+        },
+        "MotdBanner": {
+            "Default": "https://raw.githubusercontent.com/mcsheaj/aws-playground/master/scripts/motd.sh",
+            "Description": "Banner text to display upon login.",
+            "Type": "String"
+        }
+    },
+    "Mappings": {
+        "InstanceType2Architecture": {
+            "t1.micro": {
+                "Arch": "HVM64"
+            },
+            "t2.nano": {
+                "Arch": "HVM64"
+            },
+            "t2.micro": {
+                "Arch": "HVM64"
+            },
+            "t2.small": {
+                "Arch": "HVM64"
+            },
+            "t2.medium": {
+                "Arch": "HVM64"
+            },
+            "t2.large": {
+                "Arch": "HVM64"
+            },
+            "t3.nano": {
+                "Arch": "HVM64"
+            },
+            "t3.micro": {
+                "Arch": "HVM64"
+            },
+            "t3.small": {
+                "Arch": "HVM64"
+            },
+            "t3.medium": {
+                "Arch": "HVM64"
+            },
+            "t3.large": {
+                "Arch": "HVM64"
+            },
+            "m1.small": {
+                "Arch": "HVM64"
+            },
+            "m1.medium": {
+                "Arch": "HVM64"
+            },
+            "m1.large": {
+                "Arch": "HVM64"
+            },
+            "m1.xlarge": {
+                "Arch": "HVM64"
+            },
+            "m2.xlarge": {
+                "Arch": "HVM64"
+            },
+            "m2.2xlarge": {
+                "Arch": "HVM64"
+            },
+            "m2.4xlarge": {
+                "Arch": "HVM64"
+            },
+            "m3.medium": {
+                "Arch": "HVM64"
+            },
+            "m3.large": {
+                "Arch": "HVM64"
+            },
+            "m3.xlarge": {
+                "Arch": "HVM64"
+            },
+            "m3.2xlarge": {
+                "Arch": "HVM64"
+            },
+            "m4.large": {
+                "Arch": "HVM64"
+            },
+            "m4.xlarge": {
+                "Arch": "HVM64"
+            },
+            "m4.2xlarge": {
+                "Arch": "HVM64"
+            },
+            "m4.4xlarge": {
+                "Arch": "HVM64"
+            },
+            "m4.10xlarge": {
+                "Arch": "HVM64"
+            },
+            "c1.medium": {
+                "Arch": "HVM64"
+            },
+            "c1.xlarge": {
+                "Arch": "HVM64"
+            },
+            "c3.large": {
+                "Arch": "HVM64"
+            },
+            "c3.xlarge": {
+                "Arch": "HVM64"
+            },
+            "c3.2xlarge": {
+                "Arch": "HVM64"
+            },
+            "c3.4xlarge": {
+                "Arch": "HVM64"
+            },
+            "c3.8xlarge": {
+                "Arch": "HVM64"
+            },
+            "c4.large": {
+                "Arch": "HVM64"
+            },
+            "c4.xlarge": {
+                "Arch": "HVM64"
+            },
+            "c4.2xlarge": {
+                "Arch": "HVM64"
+            },
+            "c4.4xlarge": {
+                "Arch": "HVM64"
+            },
+            "c4.8xlarge": {
+                "Arch": "HVM64"
+            },
+            "g2.2xlarge": {
+                "Arch": "HVMG2"
+            },
+            "g2.8xlarge": {
+                "Arch": "HVMG2"
+            },
+            "r3.large": {
+                "Arch": "HVM64"
+            },
+            "r3.xlarge": {
+                "Arch": "HVM64"
+            },
+            "r3.2xlarge": {
+                "Arch": "HVM64"
+            },
+            "r3.4xlarge": {
+                "Arch": "HVM64"
+            },
+            "r3.8xlarge": {
+                "Arch": "HVM64"
+            },
+            "i2.xlarge": {
+                "Arch": "HVM64"
+            },
+            "i2.2xlarge": {
+                "Arch": "HVM64"
+            },
+            "i2.4xlarge": {
+                "Arch": "HVM64"
+            },
+            "i2.8xlarge": {
+                "Arch": "HVM64"
+            },
+            "d2.xlarge": {
+                "Arch": "HVM64"
+            },
+            "d2.2xlarge": {
+                "Arch": "HVM64"
+            },
+            "d2.4xlarge": {
+                "Arch": "HVM64"
+            },
+            "d2.8xlarge": {
+                "Arch": "HVM64"
+            },
+            "hi1.4xlarge": {
+                "Arch": "HVM64"
+            },
+            "hs1.8xlarge": {
+                "Arch": "HVM64"
+            },
+            "cr1.8xlarge": {
+                "Arch": "HVM64"
+            },
+            "cc2.8xlarge": {
+                "Arch": "HVM64"
+            }
+        },
+        "Region2ArchitectureAmi": {
+            "eu-north-1": {
+                "HVM64": "ami-28d15f56",
+                "HVMG2": "NOT_SUPPORTED"
+            },
+            "ap-south-1": {
+                "HVM64": "ami-00b3aa8a93dd09c13",
+                "HVMG2": "NOT_SUPPORTED"
+            },
+            "eu-west-3": {
+                "HVM64": "ami-0641e4dfc1427f114",
+                "HVMG2": "NOT_SUPPORTED"
+            },
+            "eu-west-2": {
+                "HVM64": "ami-0ca65a55561666293",
+                "HVMG2": "NOT_SUPPORTED"
+            },
+            "eu-west-1": {
+                "HVM64": "ami-024107e3e3217a248",
+                "HVMG2": "NOT_SUPPORTED"
+            },
+            "ap-northeast-2": {
+                "HVM64": "ami-0d98591cbf9ef1ffd",
+                "HVMG2": "NOT_SUPPORTED"
+            },
+            "ap-northeast-1": {
+                "HVM64": "ami-00d29e4cb217ae06b",
+                "HVMG2": "NOT_SUPPORTED"
+            },
+            "sa-east-1": {
+                "HVM64": "ami-057f5d52ff7ae75ae",
+                "HVMG2": "NOT_SUPPORTED"
+            },
+            "ca-central-1": {
+                "HVM64": "ami-0b32354309da5bba5",
+                "HVMG2": "NOT_SUPPORTED"
+            },
+            "ap-southeast-1": {
+                "HVM64": "ami-01514bb1776d5c018",
+                "HVMG2": "NOT_SUPPORTED"
+            },
+            "ap-southeast-2": {
+                "HVM64": "ami-062c04ec46aecd204",
+                "HVMG2": "NOT_SUPPORTED"
+            },
+            "eu-central-1": {
+                "HVM64": "ami-06a5303d47fbd8c60",
+                "HVMG2": "NOT_SUPPORTED"
+            },
+            "us-east-1": {
+                "HVM64": "ami-00a9d4a05375b2763",
+                "HVMG2": "NOT_SUPPORTED"
+            },
+            "us-east-2": {
+                "HVM64": "ami-00d1f8201864cc10c",
+                "HVMG2": "NOT_SUPPORTED"
+            },
+            "us-west-1": {
+                "HVM64": "ami-097ad469381034fa2",
+                "HVMG2": "NOT_SUPPORTED"
+            },
+            "us-west-2": {
+                "HVM64": "ami-0b840e8a1ce4cdf15",
+                "HVMG2": "NOT_SUPPORTED"
+            }
+        }
+    },
+    "Resources": {
+        "NatSecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": "ssh",
+                "VpcId": {
+                    "Ref": "VpcId"
+                },
+                "SecurityGroupIngress": [
+                    {
+                        "CidrIp": {
+                            "Ref": "VpcCidr"
+                        },
+                        "IpProtocol": "tcp",
+                        "FromPort": 22,
+                        "ToPort": 22
+                    },
+                    {
+                        "CidrIp": {
+                            "Ref": "VpcCidr"
+                        },
+                        "IpProtocol": "tcp",
+                        "FromPort": 80,
+                        "ToPort": 80
+                    },
+                    {
+                        "CidrIp": {
+                            "Ref": "VpcCidr"
+                        },
+                        "IpProtocol": "tcp",
+                        "FromPort": 443,
+                        "ToPort": 443
+                    },
+                    {
+                        "CidrIp": {
+                            "Ref": "VpcCidr"
+                        },
+                        "FromPort": -1,
+                        "IpProtocol": "icmp",
+                        "ToPort": -1
+                    }
+                ],
+                "SecurityGroupEgress": [
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 80,
+                        "ToPort": 80,
+                        "CidrIp": "0.0.0.0/0"
+                    },
+                    {
+                        "IpProtocol": "tcp",
+                        "FromPort": 443,
+                        "ToPort": 443,
+                        "CidrIp": "0.0.0.0/0"
+                    },
+                    {
+                        "CidrIp": "0.0.0.0/0",
+                        "FromPort": -1,
+                        "IpProtocol": "icmp",
+                        "ToPort": -1
+                    }
+                ],
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "NatSG"
+                    },
+                    {
+                        "Key": "StackName",
+                        "Value": {
+                            "Fn::Sub": "${AWS::StackName}"
+                        }
+                    },
+                    {
+                        "Key": "Network",
+                        "Value": "Public"
+                    }
+                ]
+            }
+        },
+        "NatProfile": {
+            "Type": "AWS::IAM::InstanceProfile",
+            "Properties": {
+                "Roles": [
+                    {
+                        "Ref": "NatRole"
+                    }
+                ]
+            }
+        },
+        "NatRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": "ec2.amazonaws.com"
+                            },
+                            "Action": "sts:AssumeRole"
+                        }
+                    ]
+                },
+                "Path": "/",
+                "Policies": [
+                    {
+                        "PolicyName": "iam",
+                        "PolicyDocument": {
+                            "Version": "2012-10-17",
+                            "Statement": [
+                                {
+                                    "Effect": "Allow",
+                                    "Action": "iam:ListUsers",
+                                    "Resource": "*"
+                                },
+                                {
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "iam:ListSSHPublicKeys",
+                                        "iam:GetSSHPublicKey"
+                                    ],
+                                    "Resource": {
+                                        "Fn::Sub": "arn:aws:iam::${AWS::AccountId}:user/*"
+                                    }
+                                },
+                                {
+                                    "Action": "iam:GetGroup",
+                                    "Resource": {
+                                        "Fn::Sub": "arn:aws:iam::323270637157:group/${AdministratorsGroup}"
+                                    },
+                                    "Effect": "Allow"
+                                },
+                                {
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "ec2:CreateRoute",
+                                        "ec2:DeleteRoute",
+                                        "ec2:ModifyInstanceAttribute",
+                                        "ec2:ReplaceRoute",
+                                        "ec2:DescribeRouteTables"
+                                    ],
+                                    "Resource": "*"
+                                },
+                                {
+                                    "Action": [
+                                        "ec2:CreateTags",
+                                        "ec2:DescribeTags"
+                                    ],
+                                    "Effect": "Allow",
+                                    "Resource": "*"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        "NatScalingGroup": {
+            "Type": "AWS::AutoScaling::AutoScalingGroup",
+            "Properties": {
+                "VPCZoneIdentifier": {
+                    "Ref": "PublicSubnets"
+                },
+                "LaunchConfigurationName": {
+                    "Ref": "LaunchConfig"
+                },
+                "MinSize": {
+                    "Ref": "InstanceCapacity"
+                },
+                "MaxSize": "2",
+                "DesiredCapacity": {
+                    "Ref": "InstanceCapacity"
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": "Nat-AMZN1",
+                        "PropagateAtLaunch": true
+                    },
+                    {
+                        "Key": "StackName",
+                        "Value": {
+                            "Fn::Sub": "${AWS::StackName}"
+                        },
+                        "PropagateAtLaunch": true
+                    },
+                    {
+                        "Key": "Network",
+                        "Value": "Public",
+                        "PropagateAtLaunch": true
+                    }
+                ]
+            },
+            "CreationPolicy": {
+                "ResourceSignal": {
+                    "Timeout": "PT15M"
+                }
+            }
+        },
+        "LaunchConfig": {
+            "Type": "AWS::AutoScaling::LaunchConfiguration",
+            "Properties": {
+                "ImageId": {
+                    "Fn::FindInMap": [
+                        "Region2ArchitectureAmi",
+                        {
+                            "Ref": "AWS::Region"
+                        },
+                        {
+                            "Fn::FindInMap": [
+                                "InstanceType2Architecture",
+                                {
+                                    "Ref": "InstanceType"
+                                },
+                                "Arch"
+                            ]
+                        }
+                    ]
+                },
+                "InstanceType": {
+                    "Ref": "InstanceType"
+                },
+                "IamInstanceProfile": {
+                    "Ref": "NatProfile"
+                },
+                "KeyName": {
+                    "Ref": "KeyPairName"
+                },
+                "SecurityGroups": [
+                    {
+                        "Ref": "NatSecurityGroup"
+                    }
+                ],
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": [
+                            "",
+                            [
+                                "#!/bin/bash -xe\n",
+                                "wget --no-cache -O /tmp/bootstrap-nat.sh https://raw.githubusercontent.com/mcsheaj/aws-playground/master/bootstrap/bootstrap-nat.sh \n",
+                                "chmod 755 /tmp/bootstrap-nat.sh \n",
+                                "/tmp/bootstrap-nat.sh ",
+                                {
+                                    "Ref": "AdministratorsGroup"
+                                },
+                                " ",
+                                {
+                                    "Ref": "MotdBanner"
+                                },
+                                "\n"
+                            ]
+                        ]
+                    }
+                }
+            }
+        }
+    }
+}
