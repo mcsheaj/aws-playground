@@ -39,7 +39,7 @@ while [ "$1" != "" ]; do
         --prefix)       shift
                         PREFIX=$1
                         ;;
-        -interval)      shift
+        --interval)      shift
                         INTERVAL=$1
                         ;;
         --retain)       shift
