@@ -105,7 +105,7 @@ aws s3 cp s3://${AWS_BUCKET}/${BACKUP} /tmp/speasyforms.intellipointsolutions.co
 tar -xzf speasyforms.intellipointsolutions.com.tar.gz
 rm -rf speasyforms.intellipointsolutions.com.tar.gz
 sed -i "s/define( *'DB_USER', '.*' *);/define( 'DB_USER', '${DB_USER}' );/" speasyforms.intellipointsolutions.com/html/wp-config.php
-sed -i "s/define( *'DB_PASSWORD', '.*' *);/define( 'DB_PASSWORD', '${DB_PASSWORD} ');/" speasyforms.intellipointsolutions.com/html/wp-config.php
+sed -i "s/define( *'DB_PASSWORD', '.*' *);/define( 'DB_PASSWORD', '${DB_PASSWORD}' );/" speasyforms.intellipointsolutions.com/html/wp-config.php
 sed -i "s/define( *'DB_NAME', '.*' *);/define( 'DB_NAME', '${DB_DATABASE}_speasyforms' );/" speasyforms.intellipointsolutions.com/html/wp-config.php
 sed -i "s/define( *'DB_HOST', '.*' *);/define( 'DB_HOST', '${DB_SERVER}' );/" speasyforms.intellipointsolutions.com/html/wp-config.php
 echo "<?php phpinfo() ?>" > speasyforms.intellipointsolutions.com/html/info.php
