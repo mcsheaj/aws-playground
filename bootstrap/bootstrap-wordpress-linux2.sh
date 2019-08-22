@@ -70,7 +70,7 @@ rm -rf /var/www/bak
 mkdir /var/www/bak
 
 # Get intellipoint wordpress files from S3 and move to /var/www/html
-BACKUP=$(aws s3api list-objects --bucket ${AWS_BUCKET} --prefix backup/intellipoint-hourly/intellipoint-hourly --query "Contents[?contains(Key, '.tar.gz')] | reverse(sort_by(@, &LastModified)) | [0]" | jq .Key -r)
+BACKUP=$(aws s3api list-objects --bucket ${AWS_BUCKET} --prefix backup/intellipoint-hourly/intellipoint- --query "Contents[?contains(Key, '.tar.gz')] | reverse(sort_by(@, &LastModified)) | [0]" | jq .Key -r)
 aws s3 cp s3://${AWS_BUCKET}/${BACKUP} /tmp/intellipointsolutions.com.tar.gz
 tar -xzf intellipointsolutions.com.tar.gz
 rm -rf intellipointsolutions.com.tar.gz
@@ -85,7 +85,7 @@ mv -f intellipointsolutions.com /var/www
 rm -rf intellipointsolutions.com
 
 # Get joemcshea.intellipoint files from S3 and move to /var/www/joemcshea.intellipointsolutions.com
-BACKUP=$(aws s3api list-objects --bucket ${AWS_BUCKET} --prefix backup/joemcshea-hourly/joemcshea-hourly --query "Contents[?contains(Key, '.tar.gz')] | reverse(sort_by(@, &LastModified)) | [0]" | jq .Key -r)
+BACKUP=$(aws s3api list-objects --bucket ${AWS_BUCKET} --prefix backup/joemcshea-hourly/joemcshea- --query "Contents[?contains(Key, '.tar.gz')] | reverse(sort_by(@, &LastModified)) | [0]" | jq .Key -r)
 aws s3 cp s3://${AWS_BUCKET}/${BACKUP} /tmp/joemcshea.intellipointsolutions.com.tar.gz
 tar -xzf joemcshea.intellipointsolutions.com.tar.gz
 rm -rf joemcshea.intellipointsolutions.com.tar.gz
@@ -100,7 +100,7 @@ mv -f joemcshea.intellipointsolutions.com /var/www
 rm -rf joemcshea.intellipointsolutions.com
 
 # Get speasyforms.intellipoint files from S3 and move to /var/www/speasyforms.intellipointsolutions.com
-BACKUP=$(aws s3api list-objects --bucket ${AWS_BUCKET} --prefix backup/speasyforms-hourly/speasyforms-hourly --query "Contents[?contains(Key, '.tar.gz')] | reverse(sort_by(@, &LastModified)) | [0]" | jq .Key -r)
+BACKUP=$(aws s3api list-objects --bucket ${AWS_BUCKET} --prefix backup/speasyforms-hourly/speasyforms- --query "Contents[?contains(Key, '.tar.gz')] | reverse(sort_by(@, &LastModified)) | [0]" | jq .Key -r)
 aws s3 cp s3://${AWS_BUCKET}/${BACKUP} /tmp/speasyforms.intellipointsolutions.com.tar.gz
 tar -xzf speasyforms.intellipointsolutions.com.tar.gz
 rm -rf speasyforms.intellipointsolutions.com.tar.gz
