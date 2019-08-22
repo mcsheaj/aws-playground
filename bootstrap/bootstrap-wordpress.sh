@@ -80,7 +80,7 @@ sed -i "s/define( *'DB_NAME', '.*' *);/define( 'DB_NAME', '${DB_DATABASE}' );/" 
 sed -i "s/define( *'DB_HOST', '.*' *);/define( 'DB_HOST', '${DB_SERVER}' );/" intellipointsolutions.com/html/wp-config.php
 echo "<?php phpinfo() ?>" > intellipointsolutions.com/html/info.php
 chown -R apache:apache intellipointsolutions.com
-mv -f /var/www/intellipointsolutions.com /var/www/bak
+mv -f /var/www/intellipointsolutions.com /var/www/bak | true
 mv -f intellipointsolutions.com /var/www
 rm -rf intellipointsolutions.com
 
@@ -95,7 +95,7 @@ sed -i "s/define( *'DB_NAME', '.*' *);/define( 'DB_NAME', '${DB_DATABASE}_joemcs
 sed -i "s/define( *'DB_HOST', '.*' *);/define( 'DB_HOST', '${DB_SERVER}' );/" joemcshea.intellipointsolutions.com/html/wp-config.php
 echo "<?php phpinfo() ?>" > joemcshea.intellipointsolutions.com/html/info.php
 chown -R apache:apache joemcshea.intellipointsolutions.com
-mv -f /var/www/joemcshea.intellipointsolutions.com /var/www/bak
+mv -f /var/www/joemcshea.intellipointsolutions.com /var/www/bak | true
 mv -f joemcshea.intellipointsolutions.com /var/www
 rm -rf joemcshea.intellipointsolutions.com
 
@@ -110,7 +110,7 @@ sed -i "s/define( *'DB_NAME', '.*' *);/define( 'DB_NAME', '${DB_DATABASE}_speasy
 sed -i "s/define( *'DB_HOST', '.*' *);/define( 'DB_HOST', '${DB_SERVER}' );/" speasyforms.intellipointsolutions.com/html/wp-config.php
 echo "<?php phpinfo() ?>" > speasyforms.intellipointsolutions.com/html/info.php
 chown -R apache:apache speasyforms.intellipointsolutions.com
-mv -f /var/www/speasyforms.intellipointsolutions.com /var/www/bak
+mv -f /var/www/speasyforms.intellipointsolutions.com /var/www/bak | true
 mv -f speasyforms.intellipointsolutions.com /var/www
 rm -rf speasyforms.intellipointsolutions.com
 
