@@ -7,7 +7,7 @@
             "ParameterGroups": [
                 {
                     "Label": {
-                        "default": "Virgual Private Cloud Configuration"
+                        "default": "Vitgual Private Cloud Configuration"
                     },
                     "Parameters": [
                         "AvailabilityZones",
