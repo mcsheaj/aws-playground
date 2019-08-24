@@ -915,6 +915,7 @@
                 "LaunchConfigurationName": {
                     "Ref": "LaunchConfig"
                 },
+                "HealthCheckType": "ELB",
                 "MinSize": "1",
                 "MaxSize": "5",
                 "DesiredCapacity": {
