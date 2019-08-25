@@ -1052,9 +1052,9 @@
                                 "\n",
                                 "export AWS_DEFAULT_OUTPUT=json",
                                 "\n",
-                                "wget --no-cache -O /tmp/bootstrap-wordpress-l2.sh https://raw.githubusercontent.com/mcsheaj/aws-playground/master/bootstrap/bootstrap-wordpress-l2.sh  \n",
-                                "chmod 755 /tmp/bootstrap-wordpress-l2.sh\n",
-                                "/tmp/bootstrap-wordpress-l2.sh",
+                                "wget --no-cache -O /tmp/bootstrap-wordpress-linux2.sh https://raw.githubusercontent.com/mcsheaj/aws-playground/master/bootstrap/bootstrap-wordpress-linux2.sh  \n",
+                                "chmod 755 /tmp/bootstrap-wordpress-linux2.sh\n",
+                                "/tmp/bootstrap-wordpress-linux2.sh",
                                 "\n"
                             ]
                         ]
