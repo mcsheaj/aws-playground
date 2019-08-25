@@ -8,12 +8,6 @@ REGION=`curl http://169.254.169.254/latest/dynamic/instance-identity/document|gr
 ADMIN_GROUP=$1
 MOTD_BANNER=$2
 
-# Run system updates
-yum -y update
-
-# Install jq
-yum -y install jq
-
 # Populate some variables from tags (need jq installed first)
 NAME=`aws ec2 describe-tags --region us-east-1 --filters "Name=key,Values=Name" "Name=resource-id,Values=$INSTANCE_ID" | jq .Tags[0].Value -r`
 STACK_NAME=`aws ec2 describe-tags --region us-east-1 --filters "Name=key,Values=StackName" "Name=resource-id,Values=$INSTANCE_ID" | jq .Tags[0].Value -r`
@@ -38,6 +32,12 @@ else
     echo "No ADMIN_GROUP specified, skipping aws-ect-ssh configuration"
 fi
 
+# Run system updates
+yum -y update
+
+# Install jq
+yum -y install jq
+
 # Update the motd banner
 if ! [ -z "$MOTD_BANNER" ]
 then
@@ -47,10 +47,3 @@ then
 else 
     echo "No MOTD_BANNER specified, skipping motd configuration"
 fi
-
-# Remove the ec2-user
-#userdel -f ec2-user
-
-# Update aws-cfn-bootstrap and call cfn-signal
-yum update -y aws-cfn-bootstrap* | true
-/opt/aws/bin/cfn-signal -e $? --stack $STACK_NAME --resource NatScalingGroup --region $REGION

@@ -1,4 +1,4 @@
-#!/bin/bash -xe
+#/bin/bash -ex
 
 SRC_DIR=
 PREFIX=
@@ -73,10 +73,10 @@ SUFFIX=$(date +"-%Y-%m-%d-%H-%M-%S-%Z")
 INSTANCE_ID=`curl http://169.254.169.254/latest/meta-data/instance-id`
 NAME=$(aws ec2 describe-tags --filters "Name=key,Values=Name" "Name=resource-id,Values=$INSTANCE_ID" --query "Tags[0].Value" --output text)
 FOLDER="${PREFIX}-${INTERVAL}"
-FILE_NAME="${PREFIX}${SUFFIX}.tar.gz"
+FILE_NAME="${PREFIX}-${INSTANCE_ID}${SUFFIX}.tar.gz"
 
 DB_FOLDER="db-${PREFIX}-${INTERVAL}"
-DB_FILE_NAME="db-${PREFIX}${SUFFIX}.sql.gz"
+DB_FILE_NAME="db-${PREFIX}-${INSTANCE_ID}${SUFFIX}.sql.gz"
 DB_HOST=$(awk -F "=" '/DB_SERVER/ {print $2}' /root/.aws/bootstrap.properties)
 DB_USER=$(awk -F "=" '/DB_USER/ {print $2}' /root/.aws/bootstrap.properties)
 DB_PASS=$(awk -F "=" '/DB_PASSWORD/ {print $2}' /root/.aws/bootstrap.properties)
