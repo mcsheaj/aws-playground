@@ -1,5 +1,8 @@
 #!/bin/bash -xe
 
+# Install jq
+yum -y install jq
+
 cd /tmp
 
 # Populate some variables from meta-data
@@ -11,9 +14,6 @@ MOTD_BANNER=$2
 # Populate some variables from tags (need jq installed first)
 NAME=`aws ec2 describe-tags --region us-east-1 --filters "Name=key,Values=Name" "Name=resource-id,Values=$INSTANCE_ID" | jq .Tags[0].Value -r`
 STACK_NAME=`aws ec2 describe-tags --region us-east-1 --filters "Name=key,Values=StackName" "Name=resource-id,Values=$INSTANCE_ID" | jq .Tags[0].Value -r`
-
-# Install jq
-yum -y install jq
 
 # Update the instance name to include the stack name
 if [[ $NAME != *-$STACK_NAME ]]
