@@ -8,9 +8,6 @@ REGION=`curl http://169.254.169.254/latest/dynamic/instance-identity/document|gr
 ADMIN_GROUP=$1
 MOTD_BANNER=$2
 
-# Run system updates
-yum -y update
-
 # Install jq
 yum -y install jq
 
@@ -55,6 +52,9 @@ fi
 wget --no-cache https://raw.githubusercontent.com/mcsheaj/aws-playground/master/scripts/aws-auto-healing-nat.sh
 chmod 700 aws-auto-healing-nat.sh
 sudo ./aws-auto-healing-nat.sh
+
+# Run system updates
+yum -y update
 
 # Update aws-cfn-bootstrap and call cfn-signal
 yum update -y aws-cfn-bootstrap* | true

@@ -4,9 +4,6 @@
 INSTANCE_ID=$(curl http://169.254.169.254/latest/meta-data/instance-id)
 REGION=$(curl http://169.254.169.254/latest/dynamic/instance-identity/document|grep region|awk -F\" '{print $4}')
 
-# Run system updates
-yum -y update
-
 # Install jq
 yum -y install jq
 
@@ -134,9 +131,8 @@ else
     NEW_NAME=$NAME
 fi
 
-# Update aws-cfn-bootstrap and call cfn-signal
-#yum update -y aws-cfn-bootstrap* | true
-#/opt/aws/bin/cfn-signal -e $? --stack $STACK_NAME --resource NatScalingGroup --region $REGION
+# Run system updates
+yum -y update
 
 cat << EOF > /root/.aws/config
 [default]
