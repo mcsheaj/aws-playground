@@ -663,12 +663,12 @@
             "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
             "Properties": {
                 "HealthCheckPath": "/info.php",
-                "HealthCheckIntervalSeconds": 10,
+                "HealthCheckIntervalSeconds": 6,
                 "HealthCheckTimeoutSeconds": 5,
                 "HealthyThresholdCount": 2,
                 "Port": 80,
                 "Protocol": "HTTP",
-                "UnhealthyThresholdCount": 5,
+                "UnhealthyThresholdCount": 2,
                 "VpcId": {
                     "Ref": "VpcId"
                 },
@@ -708,12 +708,12 @@
             "Type": "AWS::ElasticLoadBalancingV2::TargetGroup",
             "Properties": {
                 "HealthCheckPath": "/info.php",
-                "HealthCheckIntervalSeconds": 10,
+                "HealthCheckIntervalSeconds": 6,
                 "HealthCheckTimeoutSeconds": 5,
                 "HealthyThresholdCount": 2,
                 "Port": 443,
                 "Protocol": "HTTPS",
-                "UnhealthyThresholdCount": 5,
+                "UnhealthyThresholdCount": 2,
                 "VpcId": {
                     "Ref": "VpcId"
                 },
@@ -898,6 +898,7 @@
                     "Ref": "LaunchConfig"
                 },
                 "HealthCheckType": "ELB",
+                "HealthCheckGracePeriod": "300",
                 "MinSize": "1",
                 "MaxSize": "5",
                 "DesiredCapacity": {
