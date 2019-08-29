@@ -54,9 +54,7 @@
                         "default": "Backup Configuration"
                     },
                     "Parameters": [
-                        "BucketName",
-                        "AppId",
-                        "AppSecret"
+                        "BucketName"
                     ]
                 }
             ],
@@ -111,12 +109,6 @@
                 },
                 "BucketName": {
                     "default": "Bucket Name"
-                },
-                "AppId": {
-                    "default": "Access Key Id"
-                },
-                "AppSecret": {
-                    "default": "Secret Access Key"
                 }
             }
         }
@@ -324,16 +316,6 @@
         "BucketName": {
             "Default": "",
             "Description": "The bucket from which resources can be read and backups can be written. The instance role must have the permissions in WordPressRole in order for backups to work correctly.",
-            "Type": "String"
-        },        
-        "AppId": {
-            "Default": "",
-            "Description": "The AWS_ACCESS_KEY_ID of an IAM use that will be used to perform backups. The user behind the access key/secret must have the permissions in WordPressRole in order for backups to work correctly.",
-            "Type": "String"
-        },        
-        "AppSecret": {
-            "Default": "",
-            "Description": "The AWS_SECRET_ACCESS_KEY of an IAM use that will be used to perform backups. The user behind the access key/secret must have the permissions in WordPressRole in order for backups to work correctly.",
             "Type": "String"
         }
     },
@@ -1020,21 +1002,6 @@
                                     ]
                                 },
                                 "\n",
-                                "export AWS_ACCESS_KEY_ID=",
-                                {
-                                    "Ref": "AppId"
-                                },
-                                "\n",
-                                "export AWS_SECRET_ACCESS_KEY=",
-                                {
-                                    "Ref": "AppSecret"
-                                },
-                                "\n",
-                                "export AWS_DEFAULT_REGION=",
-                                {
-                                    "Ref": "AWS::Region"
-                                },
-                                "\n",
                                 "export ADMIN_GROUP=",
                                 {
                                     "Ref": "AdministratorsGroup"
@@ -1049,8 +1016,6 @@
                                 {
                                     "Ref": "MotdBanner"
                                 },
-                                "\n",
-                                "export AWS_DEFAULT_OUTPUT=json",
                                 "\n",
                                 "wget --no-cache -O /tmp/bootstrap-wordpress-linux2.sh https://raw.githubusercontent.com/mcsheaj/aws-playground/master/bootstrap/bootstrap-wordpress-linux2.sh  \n",
                                 "chmod 755 /tmp/bootstrap-wordpress-linux2.sh\n",

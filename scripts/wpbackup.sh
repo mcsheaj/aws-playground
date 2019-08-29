@@ -45,12 +45,6 @@ while [ "$1" != "" ]; do
         --retain)       shift
                         RETAIN=$1
                         ;;
-        --access-id)    shift
-                        export AWS_ACCESS_KEY_ID=$1
-                        ;;
-        --secret-key)   shift
-                        export AWS_SECRET_ACCESS_KEY=$1
-                        ;;
         *)              echo "Unknown parameter: $1"
                         usage
                         exit 1

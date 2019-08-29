@@ -59,9 +59,6 @@ cd /etc/pki/tls/certs
 yum install -y mod_ssl
 wget --no-cache -O /etc/httpd/conf.d/ssl.conf https://raw.githubusercontent.com/mcsheaj/aws-playground/master/scripts/ssl-l2.conf
 
-mkdir -p /root/.aws
-chmod 700 /root/.aws
-
 cd /tmp
 rm -rf /var/www/bak
 mkdir /var/www/bak
@@ -134,33 +131,18 @@ fi
 # Run system updates
 yum -y update
 
-cat << EOF > /root/.aws/config
-[default]
-output = $AWS_DEFAULT_OUTPUT
-region = $AWS_DEFAULT_REGION
-EOF
-chmod 600 /root/.aws/config
-
-cat << EOF > /root/.aws/credentials
-[default]
-aws_access_key_id = $AWS_ACCESS_KEY_ID
-aws_secret_access_key = $AWS_SECRET_ACCESS_KEY
-EOF
-chmod 600 /root/.aws/credentials
+# 
+mkdir -p /root/.aws
+chmod 700 /root/.aws
 
 cat << EOF > /root/.aws/bootstrap.properties
-BOOT_ADMIN_GROUP=$ADMIN_GROUP
-BOOT_MOTD_BANNER=$MOTD_BANNER
-BOOT_DB_USER=$DB_USER
-BOOT_DB_PASSWORD=$DB_PASSWORD
-BOOT_DB_DATABASE=$DB_DATABASE
-BOOT_DB_SERVER=$DB_SERVER
-BOOT_AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
-BOOT_AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
-BOOT_AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION
-BOOT_AWS_DEFAULT_OUTPUT=$AWS_DEFAULT_OUTPUT
-BOOT_AWS_BUCKET=$AWS_BUCKET
+ADMIN_GROUP=$ADMIN_GROUP
+MOTD_BANNER=$MOTD_BANNER
+DB_USER=$DB_USER
+DB_PASSWORD=$DB_PASSWORD
+DB_DATABASE=$DB_DATABASE
+DB_SERVER=$DB_SERVER
+AWS_BUCKET=$AWS_BUCKET
 EOF
-sed -i "s/BOOT_//" /root/.aws/bootstrap.properties
 chmod 600 /root/.aws/bootstrap.properties
 
