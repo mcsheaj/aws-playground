@@ -871,7 +871,7 @@
                                     "Effect": "Allow",
                                     "Action": "s3:*Object",
                                     "Resource": {
-                                        "Fn::Sub": "arn:aws:s3:::${BucketName}"
+                                        "Fn::Sub": "arn:aws:s3:::${BucketName}/*"
                                     }
                                 },
                                 {
