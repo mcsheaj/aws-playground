@@ -544,11 +544,6 @@
                         "PropagateAtLaunch": true
                     }
                 ]
-            },
-            "CreationPolicy": {
-                "ResourceSignal": {
-                    "Timeout": "PT15M"
-                }
             }
         },
         "LaunchConfig": {
