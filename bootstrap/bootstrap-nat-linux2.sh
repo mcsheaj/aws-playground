@@ -39,6 +39,9 @@ fi
 # Remove the ec2-user
 userdel -f ec2-user
 
+# Disable source/destination IP check so forwarding will work
+aws ec2 modify-instance-attribute --instance-id ${INSTANCE_ID} --source-dest-check "{\"Value\": false}" --region ${REGION}
+
 # Turn on IPV4 forwarding
 echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf
 sysctl -p
