@@ -41,7 +41,8 @@ userdel -f ec2-user
 echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf
 sysctl -p
 
-VPC_CIDR=$(curl http://169.254.169.254/latest/meta-data/network/interfaces/macs/$/vpc-ipv4-cidr-block)
+MAC_ADDRESS=$(curl http://169.254.169.254/latest/meta-data/network/interfaces/macs/)
+VPC_CIDR=$(curl http://169.254.169.254/latest/meta-data/network/interfaces/macs/${MAC_ADDRESS}/vpc-ipv4-cidr-block)
 
 # Enable nat in iptables for our VPC CIDDR
 iptables -t nat -A POSTROUTING -o eth0 -s ${VPC_CIDR} -j MASQUERADE
