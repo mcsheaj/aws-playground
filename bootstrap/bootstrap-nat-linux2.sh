@@ -5,9 +5,11 @@ yum -y install jq
 
 cd /tmp
 
-# Populate some variables from meta-data
+# Populate some variables from meta-data (need jq installed first)
 INSTANCE_ID=$(curl http://169.254.169.254/latest/meta-data/instance-id)
 REGION=$(curl http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r .region)
+MAC_ADDRESS=$(curl http://169.254.169.254/latest/meta-data/network/interfaces/macs/)
+VPC_CIDR=$(curl http://169.254.169.254/latest/meta-data/network/interfaces/macs/${MAC_ADDRESS}/vpc-ipv4-cidr-block)
 
 # Populate some variables from tags (need jq installed first)
 NAME=$(aws ec2 describe-tags --region us-east-1 --filters "Name=key,Values=Name" "Name=resource-id,Values=$INSTANCE_ID" --output json | jq .Tags[0].Value -r)
@@ -40,9 +42,6 @@ userdel -f ec2-user
 # Turn on IPV4 forwarding
 echo "net.ipv4.ip_forward = 1" >> /etc/sysctl.conf
 sysctl -p
-
-MAC_ADDRESS=$(curl http://169.254.169.254/latest/meta-data/network/interfaces/macs/)
-VPC_CIDR=$(curl http://169.254.169.254/latest/meta-data/network/interfaces/macs/${MAC_ADDRESS}/vpc-ipv4-cidr-block)
 
 # Enable nat in iptables for our VPC CIDDR
 iptables -t nat -A POSTROUTING -o eth0 -s ${VPC_CIDR} -j MASQUERADE
