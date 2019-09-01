@@ -10,8 +10,8 @@ INSTANCE_ID=$(curl http://169.254.169.254/latest/meta-data/instance-id)
 REGION=$(curl http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r .region)
 
 # Populate some variables from tags (need jq installed first)
-NAME=$(aws ec2 describe-tags --region us-east-1 --filters "Name=key,Values=Name" "Name=resource-id,Values=$INSTANCE_ID" | jq .Tags[0].Value -r)
-STACK_NAME=$(aws ec2 describe-tags --region us-east-1 --filters "Name=key,Values=StackName" "Name=resource-id,Values=$INSTANCE_ID" | jq .Tags[0].Value -r)
+NAME=$(aws ec2 describe-tags --region us-east-1 --filters "Name=key,Values=Name" "Name=resource-id,Values=$INSTANCE_ID" --output json | jq .Tags[0].Value -r)
+STACK_NAME=$(aws ec2 describe-tags --region us-east-1 --filters "Name=key,Values=StackName" "Name=resource-id,Values=$INSTANCE_ID" --output json | jq .Tags[0].Value -r)
 
 # Create user accounts for administrators
 if ! [ -z "$ADMIN_GROUP" ]

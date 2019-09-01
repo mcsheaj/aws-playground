@@ -40,7 +40,7 @@ ROUTE_TABLES=$(aws ec2 describe-route-tables --filters "Name=vpc-id,Values=${VPC
 
 for ROUTE_TABLE  in $ROUTE_TABLES
 do
-   TARGET=$(aws ec2 describe-route-tables --filters "Name=route-table-id,Values=${ROUTE_TABLE}" --region ${REGION} | jq '.RouteTables[].Routes[] | select(.DestinationCidrBlock == "0.0.0.0/0")' | jq .InstanceId -r)
+   TARGET=$(aws ec2 describe-route-tables --filters "Name=route-table-id,Values=${ROUTE_TABLE}" --region ${REGION} --output json | jq '.RouteTables[].Routes[] | select(.DestinationCidrBlock == "0.0.0.0/0")' | jq .InstanceId -r)
 
    echo "Checking ${ROUTE_TABLE}"
    if [ "$TARGET" = "" ]; then
