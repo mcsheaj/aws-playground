@@ -661,7 +661,7 @@
                                 "\n",
                                 "wget --no-cache -O /tmp/bootstrap-nat-linux2.sh https://raw.githubusercontent.com/mcsheaj/aws-playground/master/bootstrap/bootstrap-nat-linux2.sh\n",
                                 "chmod 755 /tmp/bootstrap-nat-linux2.sh\n",
-                                "/tmp/bootstrap-nat-linux2\n"
+                                "/tmp/bootstrap-nat-linux2.sh\n"
                             ]
                         ]
                     }
