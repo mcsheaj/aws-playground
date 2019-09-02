@@ -491,7 +491,7 @@
                                 {
                                     "Action": "iam:GetGroup",
                                     "Resource": {
-                                        "Fn::Sub": "arn:aws:iam::323270637157:group/${AdministratorsGroup}"
+                                        "Fn::Sub": "arn:aws:iam::${AWS::AccountId}:group/${AdministratorsGroup}"
                                     },
                                     "Effect": "Allow"
                                 },
