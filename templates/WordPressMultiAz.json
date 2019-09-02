@@ -830,7 +830,7 @@
                 "Path": "/",
                 "Policies": [
                     {
-                        "PolicyName": "iam",
+                        "PolicyName": "IP_WordPress_Iam",
                         "PolicyDocument": {
                             "Version": "2012-10-17",
                             "Statement": [
@@ -855,7 +855,15 @@
                                         "Fn::Sub": "arn:aws:iam::${AWS::AccountId}:group/${AdministratorsGroup}"
                                     },
                                     "Effect": "Allow"
-                                },
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "PolicyName": "IP_WordPress_S3",
+                        "PolicyDocument": {
+                            "Version": "2012-10-17",
+                            "Statement": [
                                 {
                                     "Sid": "ListObjectsInBucket",
                                     "Effect": "Allow",
@@ -873,7 +881,15 @@
                                     "Resource": {
                                         "Fn::Sub": "arn:aws:s3:::${BucketName}/*"
                                     }
-                                },
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "PolicyName": "IP_WordPress_Ec2",
+                        "PolicyDocument": {
+                            "Version": "2012-10-17",
+                            "Statement": [
                                 {
                                     "Action": [
                                         "ec2:DescribeInstances",

@@ -469,7 +469,7 @@
                 "Path": "/",
                 "Policies": [
                     {
-                        "PolicyName": "iam",
+                        "PolicyName": "IP_Bastion_Iam",
                         "PolicyDocument": {
                             "Version": "2012-10-17",
                             "Statement": [
@@ -489,18 +489,26 @@
                                     }
                                 },
                                 {
+                                    "Effect": "Allow",
                                     "Action": "iam:GetGroup",
                                     "Resource": {
                                         "Fn::Sub": "arn:aws:iam::${AWS::AccountId}:group/${AdministratorsGroup}"
-                                    },
-                                    "Effect": "Allow"
-                                },
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "PolicyName": "IP_Bastion_Ec2",
+                        "PolicyDocument": {
+                            "Version": "2012-10-17",
+                            "Statement": [
                                 {
+                                    "Effect": "Allow",
                                     "Action": [
                                         "ec2:CreateTags",
                                         "ec2:DescribeTags"
                                     ],
-                                    "Effect": "Allow",
                                     "Resource": "*"
                                 }
                             ]
