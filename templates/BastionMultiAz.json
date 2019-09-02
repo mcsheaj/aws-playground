@@ -548,92 +548,6 @@
         },
         "LaunchConfig": {
             "Type": "AWS::AutoScaling::LaunchConfiguration",
-            "Metadata": {
-                "AWS::CloudFormation::Init": {
-                    "configSets": {
-                        "full_install": [
-                            "install_and_enable_cfn_hup"
-                        ]
-                    },
-                    "install_and_enable_cfn_hup": {
-                        "files": {
-                            "/etc/cfn/cfn-hup.conf": {
-                                "content": {
-                                    "Fn::Join": [
-                                        "",
-                                        [
-                                            "[main]\n",
-                                            "stack=",
-                                            {
-                                                "Ref": "AWS::StackId"
-                                            },
-                                            "\n",
-                                            "region=",
-                                            {
-                                                "Ref": "AWS::Region"
-                                            },
-                                            "\n"
-                                        ]
-                                    ]
-                                },
-                                "mode": "000400",
-                                "owner": "root",
-                                "group": "root"
-                            },
-                            "/etc/cfn/hooks.d/cfn-auto-reloader.conf": {
-                                "content": {
-                                    "Fn::Join": [
-                                        "",
-                                        [
-                                            "[cfn-auto-reloader-hook]\n",
-                                            "triggers=post.update\n",
-                                            "path=Resources.EC2Instance.Metadata.AWS::CloudFormation::Init\n",
-                                            "action=/opt/aws/bin/cfn-init -v ",
-                                            " --stack ",
-                                            {
-                                                "Ref": "AWS::StackName"
-                                            },
-                                            " --resource LaunchConfig ",
-                                            " --configsets full_install ",
-                                            " --region ",
-                                            {
-                                                "Ref": "AWS::Region"
-                                            },
-                                            "\n",
-                                            "runas=root\n"
-                                        ]
-                                    ]
-                                }
-                            },
-                            "/lib/systemd/system/cfn-hup.service": {
-                                "content": {
-                                    "Fn::Join": [
-                                        "",
-                                        [
-                                            "[Unit]\n",
-                                            "Description=cfn-hup daemon\n\n",
-                                            "[Service]\n",
-                                            "Type=simple\n",
-                                            "ExecStart=/opt/aws/bin/cfn-hup\n",
-                                            "Restart=always\n\n",
-                                            "[Install]\n",
-                                            "WantedBy=multi-user.target"
-                                        ]
-                                    ]
-                                }
-                            }
-                        },
-                        "commands": {
-                            "01enable_cfn_hup": {
-                                "command": "systemctl enable cfn-hup.service"
-                            },
-                            "02start_cfn_hup": {
-                                "command": "systemctl start cfn-hup.service"
-                            }
-                        }
-                    }
-                }
-            },
             "Properties": {
                 "ImageId": {
                     "Fn::FindInMap": [
@@ -674,17 +588,19 @@
                             [
                                 "#!/bin/bash -xe\n",
                                 "\n",
-                                "wget --no-cache -O /tmp/bootstrap-bastion.sh https://raw.githubusercontent.com/mcsheaj/aws-playground/master/bootstrap/bootstrap-bastion.sh \n",
-                                "chmod 755 /tmp/bootstrap-bastion.sh \n",
-                                "/tmp/bootstrap-bastion.sh ",
+                                "export ADMIN_GROUP=",
                                 {
                                     "Ref": "AdministratorsGroup"
                                 },
-                                " ",
+                                "\n",
+                                "export MOTD_BANNER=",
                                 {
                                     "Ref": "MotdBanner"
                                 },
-                                "\n"
+                                "\n",
+                                "wget --no-cache -O /tmp/bootstrap-bastion.sh https://raw.githubusercontent.com/mcsheaj/aws-playground/master/bootstrap/bootstrap-bastion.sh \n",
+                                "chmod 755 /tmp/bootstrap-bastion.sh \n",
+                                "/tmp/bootstrap-bastion.sh\n"
                             ]
                         ]
                     }
