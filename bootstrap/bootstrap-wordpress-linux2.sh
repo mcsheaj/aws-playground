@@ -109,10 +109,10 @@ mv -f speasyforms.intellipointsolutions.com /var/www
 rm -rf speasyforms.intellipointsolutions.com
 
 # Setup the backup script
-wget --no-cache -O /etc/cron.d/wordpress_backup https://raw.githubusercontent.com/mcsheaj/aws-playground/master/scripts/wordpress_backup
-chmod 600 /etc/cron.d/wordpress_backup
-wget --no-cache -O /sbin/wpbackup.sh https://raw.githubusercontent.com/mcsheaj/aws-playground/master/scripts/wpbackup.sh
-chmod 700 /sbin/wpbackup.sh 
+wget --no-cache -O /etc/cron.d/aws_wordpress_backup.cron https://raw.githubusercontent.com/mcsheaj/aws-playground/master/scripts/aws_wordpress_backup.cron
+chmod 600 /etc/cron.d/aws_wordpress_backup.cron
+wget --no-cache -O /sbin/aws_wordpress_backup.sh https://raw.githubusercontent.com/mcsheaj/aws-playground/master/scripts/aws_wordpress_backup.sh
+chmod 700 /sbin/aws_wordpress_backup.sh 
 systemctl restart crond
 
 # Start the httpd service and configure it to start on boot
