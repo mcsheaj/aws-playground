@@ -83,7 +83,7 @@ BACKUP=$(aws s3api list-objects --bucket ${AWS_BUCKET} --prefix backup/joemcshea
 aws s3 cp s3://${AWS_BUCKET}/${BACKUP} /tmp/joemcshea.intellipointsolutions.com.tar.gz
 tar -xzf joemcshea.intellipointsolutions.com.tar.gz
 rm -rf joemcshea.intellipointsolutions.com.tar.gz
-DB_JOEMCSHEA=echo ${DB_DATABASE} | sed 's/intellipoint_/joemcshea_/'
+DB_JOEMCSHEA=$(echo ${DB_DATABASE} | sed 's/intellipoint_/joemcshea_/')
 sed -i "s/define( *'DB_USER', '.*' *);/define( 'DB_USER', '${DB_USER}' );/" joemcshea.intellipointsolutions.com/html/wp-config.php
 sed -i "s/define( *'DB_PASSWORD', '.*' *);/define( 'DB_PASSWORD', '${DB_PASSWORD}' );/" joemcshea.intellipointsolutions.com/html/wp-config.php
 sed -i "s/define( *'DB_NAME', '.*' *);/define( 'DB_NAME', '${DB_JOEMCSHEA}' );/" joemcshea.intellipointsolutions.com/html/wp-config.php
@@ -99,7 +99,7 @@ BACKUP=$(aws s3api list-objects --bucket ${AWS_BUCKET} --prefix backup/speasyfor
 aws s3 cp s3://${AWS_BUCKET}/${BACKUP} /tmp/speasyforms.intellipointsolutions.com.tar.gz
 tar -xzf speasyforms.intellipointsolutions.com.tar.gz
 rm -rf speasyforms.intellipointsolutions.com.tar.gz
-DB_SPEASYFORMS=echo ${DB_DATABASE} | sed 's/intellipoint_/speasyforms_/'
+DB_SPEASYFORMS=$(echo ${DB_DATABASE} | sed 's/intellipoint_/speasyforms_/')
 sed -i "s/define( *'DB_USER', '.*' *);/define( 'DB_USER', '${DB_USER}' );/" speasyforms.intellipointsolutions.com/html/wp-config.php
 sed -i "s/define( *'DB_PASSWORD', '.*' *);/define( 'DB_PASSWORD', '${DB_PASSWORD}' );/" speasyforms.intellipointsolutions.com/html/wp-config.php
 sed -i "s/define( *'DB_NAME', '.*' *);/define( 'DB_NAME', '${DB_SPEASYFORMS}_speasyforms' );/" speasyforms.intellipointsolutions.com/html/wp-config.php
