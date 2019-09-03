@@ -82,12 +82,7 @@ DB_FILE_NAME="db-${PREFIX}-${INSTANCE_ID}${SUFFIX}.sql.gz"
 DB_HOST=$(awk -F "=" '/DB_SERVER/ {print $2}' /root/.aws/bootstrap.properties)
 DB_USER=$(awk -F "=" '/DB_USER/ {print $2}' /root/.aws/bootstrap.properties)
 DB_PASS=$(awk -F "=" '/DB_PASSWORD/ {print $2}' /root/.aws/bootstrap.properties)
-DB=$(awk -F "=" '/DB_DATABASE/ {print $2}' /root/.aws/bootstrap.properties)
-if [ ${PREFIX} != "intellipoint" ]
-then
-    # Bit of a hack, intellipoint's DB is wordpressdb, the other two are wordpressdb_${PREFIX} (i.e. SPEasyForm's db is wordpressdb_speasyforms)
-    DB=$(awk -F "=" '/DB_DATABASE/ {print $2}' /root/.aws/bootstrap.properties)_${PREFIX}
-fi
+DB=$(awk -F "=" '/DB_DATABASE/ {print $2}' /root/.aws/bootstrap.properties | sed 's/intellipoint_/${PREFIX}_/')
 
 # The backup server is the first server to come back from describe-instance with filter Name=${NAME}
 NAME=$(aws ec2 describe-tags --filters "Name=key,Values=Name" "Name=resource-id,Values=$INSTANCE_ID" --query "Tags[0].Value" --output text)
