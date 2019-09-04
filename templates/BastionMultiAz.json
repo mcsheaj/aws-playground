@@ -171,6 +171,28 @@
             "Type": "String"
         }
     },
+    "Rules": {
+        "SubnetsInVPC": {
+            "Assertions": [
+                {
+                    "Assert": {
+                        "Fn::EachMemberIn": [
+                            {
+                                "Fn::ValueOfAll": [
+                                    "AWS::EC2::Subnet::Id",
+                                    "VpcId"
+                                ]
+                            },
+                            {
+                                "Fn::RefAll": "AWS::EC2::VPC::Id"
+                            }
+                        ]
+                    },
+                    "AssertDescription": "All subnets must exist in the VPC"
+                }
+            ]
+        }
+    },
     "Mappings": {
         "InstanceType2Architecture": {
             "t1.micro": {
@@ -504,12 +526,23 @@
                             "Version": "2012-10-17",
                             "Statement": [
                                 {
-                                    "Effect": "Allow",
                                     "Action": [
-                                        "ec2:CreateTags",
                                         "ec2:DescribeTags"
                                     ],
-                                    "Resource": "*"
+                                    "Resource": "*",
+                                    "Effect": "Allow"
+                                },
+                                {
+                                    "Action": [
+                                        "ec2:CreateTags"
+                                    ],
+                                    "Resource": "*",
+                                    "Effect": "Allow",
+                                    "Condition": {
+                                        "StringEquals": {
+                                            "ec2:ResourceTag/StackName": "WpBastion"
+                                        }
+                                    }
                                 }
                             ]
                         }
