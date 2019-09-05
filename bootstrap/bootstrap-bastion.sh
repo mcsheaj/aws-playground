@@ -50,25 +50,25 @@ fi
 userdel ec2-user || true
 rm -rf /home/ec2-user || true
 
-mkdir /etc/cfn || true
-cat << EOF > /etc/cfn/cfn-hup.conf
-[main]
-stack=${STACK_NAME}
-region=${REGION}
-EOF
-chmod 600 /etc/cfn/cfn-hup.conf
+# mkdir /etc/cfn || true
+# cat << EOF > /etc/cfn/cfn-hup.conf
+# [main]
+# stack=${STACK_NAME}
+# region=${REGION}
+# EOF
+# chmod 600 /etc/cfn/cfn-hup.conf
 
-mkdir /etc/cfn/hooks.d || true
-cat << EOF > /etc/cfn/hooks.d/cfn-auto-reloader.conf
-[cfn-auto-reloader-hook]
-triggers=post.update
-path=Resources.WebServerInstance.Metadata.AWS::CloudFormation::Init
-action=/opt/aws/bin/cfn-signal -e $? --stack ${STACK_NAME} --resource BastionScalingGroup --region ${REGION}
-EOF
-chmod 600 /etc/cfn/hooks.d/cfn-auto-reloader.conf
+# mkdir /etc/cfn/hooks.d || true
+# cat << EOF > /etc/cfn/hooks.d/cfn-auto-reloader.conf
+# [cfn-auto-reloader-hook]
+# triggers=post.update
+# path=Resources.WebServerInstance.Metadata.AWS::CloudFormation::Init
+# action=/opt/aws/bin/cfn-signal -e $? --stack ${STACK_NAME} --resource BastionScalingGroup --region ${REGION}
+# EOF
+# chmod 600 /etc/cfn/hooks.d/cfn-auto-reloader.conf
 
-# Start up the cfn-hup daemon to listen for changes to the Web Server metadata
-/opt/aws/bin/cfn-hup
+# # Start up the cfn-hup daemon to listen for changes to the Web Server metadata
+# /opt/aws/bin/cfn-hup
 
 # Send a signal indicating we're done
 /opt/aws/bin/cfn-signal -e $? --stack ${STACK_NAME} --resource BastionScalingGroup --region ${REGION} || true
