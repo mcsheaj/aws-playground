@@ -50,25 +50,24 @@ fi
 userdel ec2-user || true
 rm -rf /home/ec2-user || true
 
-# mkdir /etc/cfn || true
-# cat << EOF > /etc/cfn/cfn-hup.conf
-# [main]
-# stack=${STACK_NAME}
-# region=${REGION}
-# EOF
-# chmod 600 /etc/cfn/cfn-hup.conf
+# Create a script for cfn-hup to run on metadata updates
+cat << EOF > /sbin/aws-update-bastion.sh
+#!/bin/bash -xe
 
-# mkdir /etc/cfn/hooks.d || true
-# cat << EOF > /etc/cfn/hooks.d/cfn-auto-reloader.conf
-# [cfn-auto-reloader-hook]
-# triggers=post.update
-# path=Resources.WebServerInstance.Metadata.AWS::CloudFormation::Init
-# action=/opt/aws/bin/cfn-signal -e $? --stack ${STACK_NAME} --resource BastionScalingGroup --region ${REGION}
-# EOF
-# chmod 600 /etc/cfn/hooks.d/cfn-auto-reloader.conf
+# Populate some variables from meta-data
+INSTANCE_ID=$(curl http://169.254.169.254/latest/meta-data/instance-id)
+REGION=$(curl http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r .region)
 
-# # Start up the cfn-hup daemon to listen for changes to the Web Server metadata
-# /opt/aws/bin/cfn-hup
+# Populate some variables from tags (need jq installed first)
+NAME=$(aws ec2 describe-tags --region us-east-1 --filters "Name=key,Values=Name" "Name=resource-id,Values=${INSTANCE_ID}" | jq .Tags[0].Value -r)
+STACK_NAME=$(aws ec2 describe-tags --region us-east-1 --filters "Name=key,Values=StackName" "Name=resource-id,Values=${INSTANCE_ID}" | jq .Tags[0].Value -r)
+
+# Run system updates (this is all we're doing on update right now)
+yum -y update
+
+/opt/aws/bin/cfn-signal -e $? --stack ${STACK_NAME} --resource BastionScalingGroup --region ${REGION}
+EOF
+chmod 700 /sbin/aws-update-bastion.sh
 
 # Send a signal indicating we're done
 /opt/aws/bin/cfn-signal -e $? --stack ${STACK_NAME} --resource BastionScalingGroup --region ${REGION} || true
