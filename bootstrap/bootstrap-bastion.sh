@@ -47,9 +47,10 @@ else
 fi
 
 # Delete the ec2-user and its home directory
-userdel ec2-user
-rm -rf /home/ec2-user
+userdel ec2-user || true
+rm -rf /home/ec2-user || true
 
+mkdir /etc/cfn || true
 cat << EOF > /etc/cfn/cfn-hup.conf
 [main]
 stack=${STACK_NAME}
@@ -57,6 +58,7 @@ region=${REGION}
 EOF
 chmod 600 /etc/cfn/cfn-hup.conf
 
+mkdir /etc/cfn/hooks.d || true
 cat << EOF > /etc/cfn/hooks.d/cfn-auto-reloader.conf
 [cfn-auto-reloader-hook]
 triggers=post.update
@@ -69,4 +71,4 @@ chmod 600 /etc/cfn/hooks.d/cfn-auto-reloader.conf
 /opt/aws/bin/cfn-hup
 
 # Send a signal indicating we're done
-/opt/aws/bin/cfn-signal -e $? --stack ${STACK_NAME} --resource BastionScalingGroup --region ${REGION}
+/opt/aws/bin/cfn-signal -e $? --stack ${STACK_NAME} --resource BastionScalingGroup --region ${REGION} || true
