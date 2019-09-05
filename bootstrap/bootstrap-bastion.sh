@@ -65,9 +65,16 @@ STACK_NAME=$(aws ec2 describe-tags --region us-east-1 --filters "Name=key,Values
 # Run system updates (this is all we're doing on update right now)
 yum -y update
 
+# Call cfn-init to process the changes in the metadata
+/opt/aws/bin/cfn-init -v --stack ${STACK_NAME} --resource LaunchConfig --configsets cfn_install --region ${REGION}
+
+# Send the signal to indicate that we're done
 /opt/aws/bin/cfn-signal -e $? --stack ${STACK_NAME} --resource BastionScalingGroup --region ${REGION}
 EOF
 chmod 700 /sbin/aws-update-bastion.sh
+
+# Call cfn-init, which configures and runs cfn-hup as a service
+/opt/aws/bin/cfn-init -v --stack ${STACK_NAME} --resource LaunchConfig --configsets cfn_install --region ${REGION}
 
 # Send a signal indicating we're done
 /opt/aws/bin/cfn-signal -e $? --stack ${STACK_NAME} --resource BastionScalingGroup --region ${REGION} || true
