@@ -49,3 +49,6 @@ fi
 # Delete the ec2-user and its home directory
 userdel ec2-user
 rm -rf /home/ec2-user
+
+# Send a signal indicating we're done
+/opt/aws/bin/cfn-signal -e $? --stack ${STACK_NAME} --resource BastionScalingGroup --region ${REGION}
