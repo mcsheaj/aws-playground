@@ -585,10 +585,113 @@
                         "PropagateAtLaunch": true
                     }
                 ]
+            },
+            "CreationPolicy": {
+              "ResourceSignal": {
+                "Count": {
+                    "Ref": "InstanceCapacity"
+                },
+                "Timeout": "PT15M"
+              }
+            },
+            "UpdatePolicy": {
+                "AutoScalingRollingUpdate": {
+                    "MinInstancesInService": {
+                        "Ref": "InstanceCapacity"
+                    },
+                    "MaxBatchSize": "1",
+                    "PauseTime": "PT15M",
+                    "WaitOnResourceSignals": "true"
+                }
             }
         },
         "LaunchConfig": {
             "Type": "AWS::AutoScaling::LaunchConfiguration",
+            "Metadata": {
+                "AWS::CloudFormation::Init": {
+                    "configSets": {
+                        "cfn_install": [
+                            "install_cfn"
+                        ]
+                    },
+                    "install_cfn": {
+                        "files": {
+                            "/etc/cfn/cfn-hup.conf": {
+                                "content": {
+                                    "Fn::Join": [
+                                        "",
+                                        [
+                                            "[main]\n",
+                                            "stack=",
+                                            {
+                                                "Ref": "AWS::StackId"
+                                            },
+                                            "\n",
+                                            "region=",
+                                            {
+                                                "Ref": "AWS::Region"
+                                            },
+                                            "\n"
+                                        ]
+                                    ]
+                                },
+                                "mode": "000400",
+                                "owner": "root",
+                                "group": "root"
+                            },
+                            "/etc/cfn/hooks.d/cfn-auto-reloader.conf": {
+                                "content": {
+                                    "Fn::Join": [
+                                        "",
+                                        [
+                                            "[cfn-auto-reloader-hook]\n",
+                                            "triggers=post.update\n",
+                                            "path=Resources.LaunchConfig.Metadata.AWS::CloudFormation::Init\n",
+                                            "action=/sbin/aws-update-bastion.sh\n"
+                                        ]
+                                    ]
+                                },
+                                "mode": "000400",
+                                "owner": "root",
+                                "group": "root"
+                            },
+                            "/sbin/aws-update-bastion.sh": {
+                                "content": {
+                                    "Fn::Join": [
+                                        "",
+                                        [
+                                            "#!/bin/bash -xe\n",
+                                            "\n",
+                                            "echo $1\n",
+                                            "\n",
+                                            "# Update this script before updating the stack to perform custom logic within 15 minutes of the update\n",
+                                            "yum -y update\n"
+                                        ]
+                                    ]
+                                }
+                            }
+                        },
+                        "commands" : {
+                            "aws_update_bastion" : {
+                                "command" : "/sbin/aws-update-bastion.sh MetadataVersion=6"
+                            }
+                        },
+                        "services": {
+                            "sysvinit": {
+                                "cfn-hup": {
+                                    "enabled": "true",
+                                    "ensureRunning": "true",
+                                    "files": [
+                                        "/etc/cfn/cfn-hup.conf",
+                                        "/etc/cfn/hooks.d/cfn-auto-reloader.conf",
+                                        "/sbin/aws-update-bastion.sh"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
             "Properties": {
                 "ImageId": {
                     "Fn::FindInMap": [
@@ -629,6 +732,8 @@
                             [
                                 "#!/bin/bash -xe\n",
                                 "\n",
+                                "echo UserDataVersion=4",
+                                "\n",
                                 "export ADMIN_GROUP=",
                                 {
                                     "Ref": "AdministratorsGroup"
@@ -640,7 +745,7 @@
                                 },
                                 "\n",
                                 "wget --no-cache -O /tmp/bootstrap-bastion.sh https://raw.githubusercontent.com/mcsheaj/aws-playground/master/bootstrap/bootstrap-bastion.sh \n",
-                                "chmod 755 /tmp/bootstrap-bastion.sh \n",
+                                "chmod 750 /tmp/bootstrap-bastion.sh\n",
                                 "/tmp/bootstrap-bastion.sh\n"
                             ]
                         ]
