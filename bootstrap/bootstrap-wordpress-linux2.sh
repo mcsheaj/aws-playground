@@ -1,15 +1,30 @@
 #!/bin/bash -xe
 
-# Populate some variables from meta-data
-INSTANCE_ID=$(curl http://169.254.169.254/latest/meta-data/instance-id)
-REGION=$(curl http://169.254.169.254/latest/dynamic/instance-identity/document|grep region|awk -F\" '{print $4}')
+cd /tmp
 
 # Install jq
 yum -y install jq
 
-# Populate some variables from tags (need jq installed first)
-NAME=$(aws ec2 describe-tags --region us-east-1 --filters "Name=key,Values=Name" "Name=resource-id,Values=$INSTANCE_ID" | jq .Tags[0].Value -r)
-STACK_NAME=$(aws ec2 describe-tags --region us-east-1 --filters "Name=key,Values=StackName" "Name=resource-id,Values=$INSTANCE_ID" | jq .Tags[0].Value -r)
+# Populate some variables from meta-data and tags
+INSTANCE_ID=$(curl http://169.254.169.254/latest/meta-data/instance-id)
+REGION=$(curl http://169.254.169.254/latest/dynamic/instance-identity/document | jq -r .region)
+NAME=$(aws ec2 describe-tags --region us-east-1 --filters "Name=key,Values=Name" "Name=resource-id,Values=$INSTANCE_ID" --output json | jq .Tags[0].Value -r)
+STACK_NAME=$(aws ec2 describe-tags --region us-east-1 --filters "Name=key,Values=StackName" "Name=resource-id,Values=$INSTANCE_ID" --output json | jq .Tags[0].Value -r)
+
+# Read some variables from bootstrap.properties
+MOTD_BANNER=$(awk -F "=" '/MOTD_BANNER/ {print $2}' /root/.aws/bootstrap.properties)
+ADMIN_GROUP=$(awk -F "=" '/ADMIN_GROUP/ {print $2}' /root/.aws/bootstrap.properties)
+AWS_BUCKET=$(awk -F "=" '/AWS_BUCKET/ {print $2}' /root/.aws/bootstrap.properties)
+
+# Update the motd banner
+if ! [ -z "$MOTD_BANNER" ]
+then
+    wget --no-cache -O /etc/update-motd.d/30-banner $MOTD_BANNER
+    update-motd --force
+    update-motd --disable
+else 
+    echo "No MOTD_BANNER specified, skipping motd configuration"
+fi
 
 # Create user accounts for administrators
 if ! [ -z "$ADMIN_GROUP" ]
@@ -22,30 +37,16 @@ else
     echo "No ADMIN_GROUP specified, skipping aws-ect-ssh configuration"
 fi
 
-# Update the motd banner
-if ! [ -z "$MOTD_BANNER" ]
-then
-    wget --no-cache -O /etc/update-motd.d/30-banner $MOTD_BANNER
-    update-motd --force
-    update-motd --disable
-else 
-    echo "No MOTD_BANNER specified, skipping motd configuration"
-fi
+################################################################################
+# BEGIN WordPress Setup
+################################################################################
 
-# Remove the ec2-user
-#userdel -f ec2-user
+DB_HOST=$(awk -F "=" '/DB_SERVER/ {print $2}' /root/.aws/bootstrap.properties)
+DB_USER=$(awk -F "=" '/DB_USER/ {print $2}' /root/.aws/bootstrap.properties)
+DB_PASS=$(awk -F "=" '/DB_PASSWORD/ {print $2}' /root/.aws/bootstrap.properties)
+DB_SERVER=$(awk -F "=" '/DB_DATABASE/ {print $2}' /root/.aws/bootstrap.properties)
 
-# Stop httpd and prevent it from starting on boot
-systemctl disable httpd | true
-systemctl start httpd | true
-
-# Remove any existing versions of httpd and php
-yum -y remove php* httpd* mod_ssl
-rm -rf /etc/httpd/conf.d/ssl.conf
-rm -rf /etc/pki/tls/private/localhost.key
-rm -rf /etc/pki/tls/certs/localhost.crt
-
-# Install 
+# Install amazon linux extras lamp
 amazon-linux-extras install -y lamp-mariadb10.2-php7.2 php7.2
 
 # Install php-xml
@@ -54,12 +55,12 @@ yum install -y php-xml.*
 # Generate self-signed certificate
 cd /etc/pki/tls/certs
 ./make-dummy-cert localhost.crt
+cd /tmp
 
 # Configure SSL with self-signed certificate (real cert is on the load balancer) and vhosts
 yum install -y mod_ssl
 wget --no-cache -O /etc/httpd/conf.d/ssl.conf https://raw.githubusercontent.com/mcsheaj/aws-playground/master/scripts/ssl-l2.conf
 
-cd /tmp
 rm -rf /var/www/bak
 mkdir /var/www/bak
 
@@ -121,6 +122,10 @@ systemctl restart crond
 sudo systemctl enable httpd
 sudo systemctl start httpd
 
+################################################################################
+# END WordPress Setup
+################################################################################
+
 # Update the instance name to include the stack name
 if [[ $NAME != *-$STACK_NAME ]]
 then
@@ -133,18 +138,13 @@ fi
 # Run system updates
 yum -y update
 
-# 
-mkdir -p /root/.aws
-chmod 700 /root/.aws
+# Delete the ec2-user and its home directory
+userdel ec2-user || true
+rm -rf /home/ec2-user || true
 
-cat << EOF > /root/.aws/bootstrap.properties
-ADMIN_GROUP=$ADMIN_GROUP
-MOTD_BANNER=$MOTD_BANNER
-DB_USER=$DB_USER
-DB_PASSWORD=$DB_PASSWORD
-DB_DATABASE=$DB_DATABASE
-DB_SERVER=$DB_SERVER
-AWS_BUCKET=$AWS_BUCKET
-EOF
-chmod 600 /root/.aws/bootstrap.properties
+# Call cfn-init, which reads the launch configration metadata and uses it to
+# configure and runs cfn-hup as a service, so we can get a script run on updates to the metadata
+/opt/aws/bin/cfn-init -v --stack ${STACK_NAME} --resource LaunchConfig --configsets cfn_install --region ${REGION}
 
+# Send a signal indicating we're done
+/opt/aws/bin/cfn-signal -e $? --stack ${STACK_NAME} --resource NatScalingGroup --region ${REGION} || true
