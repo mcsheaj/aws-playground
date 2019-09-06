@@ -48,7 +48,8 @@ yum -y update
 userdel ec2-user || true
 rm -rf /home/ec2-user || true
 
-# Call cfn-init, which configures and runs cfn-hup as a service
+# Call cfn-init, which reads the launch configration metadata and uses it to
+# configure and runs cfn-hup as a service, so we can get a script run on updates to the metadata
 /opt/aws/bin/cfn-init -v --stack ${STACK_NAME} --resource LaunchConfig --configsets cfn_install --region ${REGION}
 
 # Send a signal indicating we're done
