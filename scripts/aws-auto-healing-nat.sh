@@ -14,8 +14,8 @@ function usage()
 {
    echo ""
    echo "${0} [options]"
-   echo "   --tag-key - route table tag key to indicate if it is a private subnet (default: $TAG_KEY)"
-   echo "   --tag-value - route table tag value to indicate if it is a private subnet (default: $TAG_VALUE)"
+   echo "   --tag-key - route table tag key to indicate if it is a private subnet (default: ${TAG_KEY})"
+   echo "   --tag-value - route table tag value to indicate if it is a private subnet (default: ${TAG_VALUE})"
    echo ""
 }
 
@@ -38,15 +38,15 @@ done
 # Determine route tables that need to use NAT for the same VPC
 ROUTE_TABLES=$(aws ec2 describe-route-tables --filters "Name=vpc-id,Values=${VPC_ID}" "Name=tag:${TAG_KEY},Values=${TAG_VALUE}" --region ${REGION} --output json | jq .RouteTables[].RouteTableId -r)
 
-for ROUTE_TABLE  in $ROUTE_TABLES
+for ROUTE_TABLE  in ${ROUTE_TABLES}
 do
    TARGET=$(aws ec2 describe-route-tables --filters "Name=route-table-id,Values=${ROUTE_TABLE}" --region ${REGION} --output json | jq '.RouteTables[].Routes[] | select(.DestinationCidrBlock == "0.0.0.0/0")' | jq .InstanceId -r)
 
    echo "Checking ${ROUTE_TABLE}"
-   if [ "$TARGET" = "" ]; then
+   if [ "${TARGET}" = "" ]; then
       # Create default route 
       echo "No default route is detected. Creating default route for ${ROUTE_TABLE}"
-      aws ec2 create-route --route-table-id $ROUTE_TABLE --destination-cidr-block 0.0.0.0/0 --instance-id ${INSTANCE_ID} --region ${REGION}
+      aws ec2 create-route --route-table-id ${ROUTE_TABLE} --destination-cidr-block 0.0.0.0/0 --instance-id ${INSTANCE_ID} --region ${REGION}
    elif [ "${TARGET}" != "${INSTANCE_ID}" ]; then
       # Replace default route
       echo "Default route is set to ${TARGET}. Replacing default route to ${INSTANCE_ID}"
