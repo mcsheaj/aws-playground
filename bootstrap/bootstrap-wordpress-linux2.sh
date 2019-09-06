@@ -147,4 +147,4 @@ rm -rf /home/ec2-user || true
 /opt/aws/bin/cfn-init -v --stack ${STACK_NAME} --resource LaunchConfig --configsets cfn_install --region ${REGION}
 
 # Send a signal indicating we're done
-/opt/aws/bin/cfn-signal -e $? --stack ${STACK_NAME} --resource NatScalingGroup --region ${REGION} || true
+/opt/aws/bin/cfn-signal -e $? --stack ${STACK_NAME} --resource WordPressGroup --region ${REGION} || true
