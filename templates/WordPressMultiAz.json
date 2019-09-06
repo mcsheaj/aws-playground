@@ -671,7 +671,7 @@
                 "Matcher": "301",
                 "Port": 80,
                 "Protocol": "HTTP",
-                "UnhealthyThresholdCount": 2,
+                "UnhealthyThresholdCount": 4,
                 "VpcId": {
                     "Ref": "VpcId"
                 },
@@ -719,7 +719,7 @@
                 "Matcher": "200",
                 "Port": 443,
                 "Protocol": "HTTPS",
-                "UnhealthyThresholdCount": 2,
+                "UnhealthyThresholdCount": 4,
                 "VpcId": {
                     "Ref": "VpcId"
                 },
