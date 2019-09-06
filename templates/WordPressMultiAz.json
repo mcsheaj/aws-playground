@@ -319,6 +319,28 @@
             "Type": "String"
         }
     },
+    "Rules": {
+        "SubnetsInVPC": {
+            "Assertions": [
+                {
+                    "Assert": {
+                        "Fn::EachMemberIn": [
+                            {
+                                "Fn::ValueOfAll": [
+                                    "AWS::EC2::Subnet::Id",
+                                    "VpcId"
+                                ]
+                            },
+                            {
+                                "Fn::RefAll": "AWS::EC2::VPC::Id"
+                            }
+                        ]
+                    },
+                    "AssertDescription": "All subnets must exist in the VPC"
+                }
+            ]
+        }
+    },
     "Mappings": {
         "InstanceType2Architecture": {
             "t1.micro": {
@@ -570,16 +592,16 @@
                 "GroupDescription": "Open load balancer for web traffic",
                 "SecurityGroupIngress": [
                     {
-                        "CidrIp": "0.0.0.0/0",
                         "IpProtocol": "tcp",
                         "FromPort": "80",
-                        "ToPort": "80"
+                        "ToPort": "80",
+                        "CidrIp": "0.0.0.0/0"
                     },
                     {
-                        "CidrIp": "0.0.0.0/0",
                         "IpProtocol": "tcp",
                         "FromPort": "443",
-                        "ToPort": "443"
+                        "ToPort": "443",
+                        "CidrIp": "0.0.0.0/0"
                     }
                 ],
                 "VpcId": {
@@ -668,7 +690,9 @@
                 "HealthyThresholdCount": 2,
                 "HealthCheckPort": "80",
                 "HealthCheckProtocol": "HTTP",
-                "Matcher": "301",
+                "Matcher": {
+                    "HttpCode" : "301"
+                },
                 "Port": 80,
                 "Protocol": "HTTP",
                 "UnhealthyThresholdCount": 4,
@@ -716,7 +740,9 @@
                 "HealthyThresholdCount": 2,
                 "HealthCheckPort": "443",
                 "HealthCheckProtocol": "HTTPS",
-                "Matcher": "200",
+                "Matcher": {
+                    "HttpCode" : "200"
+                },
                 "Port": 443,
                 "Protocol": "HTTPS",
                 "UnhealthyThresholdCount": 4,
@@ -761,16 +787,16 @@
                 "GroupDescription": "Enable HTTP access via port 80 locked down to the load balancer + SSH access",
                 "SecurityGroupIngress": [
                     {
-                        "CidrIp": "0.0.0.0/0",
                         "IpProtocol": "tcp",
                         "FromPort": "80",
-                        "ToPort": "80"
+                        "ToPort": "80",
+                        "CidrIp": "0.0.0.0/0"
                     },
                     {
-                        "CidrIp": "0.0.0.0/0",
                         "IpProtocol": "tcp",
                         "FromPort": "443",
-                        "ToPort": "443"
+                        "ToPort": "443",
+                        "CidrIp": "0.0.0.0/0"
                     },
                     {
                         "IpProtocol": "tcp",
@@ -781,10 +807,12 @@
                         }
                     },
                     {
-                        "CidrIp": "0.0.0.0/0",
-                        "FromPort": -1,
                         "IpProtocol": "icmp",
-                        "ToPort": -1
+                        "FromPort": -1,
+                        "ToPort": -1,
+                        "CidrIp": {
+                            "Ref": "VpcCidr"
+                        }
                     }
                 ],
                 "VpcId": {
@@ -856,11 +884,11 @@
                                     }
                                 },
                                 {
+                                    "Effect": "Allow",
                                     "Action": "iam:GetGroup",
                                     "Resource": {
                                         "Fn::Sub": "arn:aws:iam::${AWS::AccountId}:group/${AdministratorsGroup}"
-                                    },
-                                    "Effect": "Allow"
+                                    }
                                 }
                             ]
                         }
@@ -904,13 +932,26 @@
                             "Version": "2012-10-17",
                             "Statement": [
                                 {
+                                    "Effect": "Allow",
                                     "Action": [
                                         "ec2:DescribeInstances",
-                                        "ec2:CreateTags",
                                         "ec2:DescribeTags"
                                     ],
-                                    "Effect": "Allow",
                                     "Resource": "*"
+                                },
+                                {
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "ec2:CreateTags"
+                                    ],
+                                    "Resource": "*",
+                                    "Condition": {
+                                        "StringEquals": {
+                                            "ec2:ResourceTag/StackName": {
+                                                "Fn::Sub": "${AWS::StackName}"
+                                            }
+                                        }
+                                    }
                                 }
                             ]
                         }
@@ -961,10 +1002,116 @@
                         "PropagateAtLaunch": true
                     }
                 ]
+            },
+            "CreationPolicy": {
+              "ResourceSignal": {
+                "Count": {
+                    "Ref": "WebServerCapacity"
+                },
+                "Timeout": "PT15M"
+              }
+            },
+            "UpdatePolicy": {
+                "AutoScalingRollingUpdate": {
+                    "MinInstancesInService": {
+                        "Ref": "WebServerCapacity"
+                    },
+                    "MaxBatchSize": "1",
+                    "PauseTime": "PT15M",
+                    "WaitOnResourceSignals": "true"
+                }
             }
         },
         "LaunchConfig": {
             "Type": "AWS::AutoScaling::LaunchConfiguration",
+            "Metadata": {
+                "AWS::CloudFormation::Init": {
+                    "configSets": {
+                        "cfn_install": [
+                            "install_cfn"
+                        ]
+                    },
+                    "install_cfn": {
+                        "files": {
+                            "/etc/cfn/cfn-hup.conf": {
+                                "content": {
+                                    "Fn::Join": [
+                                        "",
+                                        [
+                                            "[main]\n",
+                                            "stack=",
+                                            {
+                                                "Ref": "AWS::StackId"
+                                            },
+                                            "\n",
+                                            "region=",
+                                            {
+                                                "Ref": "AWS::Region"
+                                            },
+                                            "\n"
+                                        ]
+                                    ]
+                                },
+                                "mode": "000400",
+                                "owner": "root",
+                                "group": "root"
+                            },
+                            "/etc/cfn/hooks.d/cfn-auto-reloader.conf": {
+                                "content": {
+                                    "Fn::Join": [
+                                        "",
+                                        [
+                                            "[cfn-auto-reloader-hook]\n",
+                                            "triggers=post.update\n",
+                                            "path=Resources.LaunchConfig.Metadata.AWS::CloudFormation::Init\n",
+                                            "action=/sbin/aws-update-wordpress.sh\n"
+                                        ]
+                                    ]
+                                },
+                                "mode": "000400",
+                                "owner": "root",
+                                "group": "root"
+                            },
+                            "/sbin/aws-update-wordpress.sh": {
+                                "content": {
+                                    "Fn::Join": [
+                                        "",
+                                        [
+                                            "#!/bin/bash -xe\n",
+                                            "\n",
+                                            "echo $1\n",
+                                            "\n",
+                                            "# Update this script before updating the stack to perform custom logic within 15 minutes of the update\n",
+                                            "yum -y update\n"
+                                        ]
+                                    ]
+                                },
+                                "mode": "000700",
+                                "owner": "root",
+                                "group": "root"              
+                            }
+                        },
+                        "commands" : {
+                            "aws_update_bastion" : {
+                                "command" : "/sbin/aws-update-wordpress.sh MetadataVersion=1"
+                            }
+                        },
+                        "services": {
+                            "sysvinit": {
+                                "cfn-hup": {
+                                    "enabled": "true",
+                                    "ensureRunning": "true",
+                                    "files": [
+                                        "/etc/cfn/cfn-hup.conf",
+                                        "/etc/cfn/hooks.d/cfn-auto-reloader.conf",
+                                        "/sbin/aws-update-wordpress.sh"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
             "Properties": {
                 "ImageId": {
                     "Fn::FindInMap": [
@@ -1005,22 +1152,38 @@
                             [
                                 "#!/bin/bash -xe\n",
                                 "\n",
-                                "export DB_USER=",
+                                "echo UserDataVersion=1",
+                                "\n",
+                                "# Create bootstrap properties in the root account home\n",
+                                "mkdir -p /root/.aws\n",
+                                "chmod 700 /root/.aws\n",
+                                "cat << EOF > /root/.aws/bootstrap.properties\n",
+                                "ADMIN_GROUP=",
+                                {
+                                    "Ref": "AdministratorsGroup"
+                                },
+                                "\n",
+                                "MOTD_BANNER=",
+                                {
+                                    "Ref": "MotdBanner"
+                                },
+                                "\n",
+                                "DB_USER=",
                                 {
                                     "Ref": "DBUser"
                                 },
                                 "\n",
-                                "export DB_PASSWORD=",
+                                "DB_PASSWORD=",
                                 {
                                     "Ref": "DBPassword"
                                 },
                                 "\n",
-                                "export DB_DATABASE=",
+                                "DB_DATABASE=",
                                 {
                                     "Ref": "DBName"
                                 },
                                 "\n",
-                                "export DB_SERVER=",
+                                "DB_SERVER=",
                                 {
                                     "Fn::GetAtt": [
                                         "DBInstance",
@@ -1028,23 +1191,16 @@
                                     ]
                                 },
                                 "\n",
-                                "export ADMIN_GROUP=",
-                                {
-                                    "Ref": "AdministratorsGroup"
-                                },
-                                "\n",
-                                "export AWS_BUCKET=",
+                                "AWS_BUCKET=",
                                 {
                                     "Ref": "BucketName"
                                 },
                                 "\n",
-                                "export MOTD_BANNER=",
-                                {
-                                    "Ref": "MotdBanner"
-                                },
+                                "EOF\n",
+                                "chmod 600 /root/.aws/bootstrap.properties\n",
                                 "\n",
                                 "wget --no-cache -O /tmp/bootstrap-wordpress-linux2.sh https://raw.githubusercontent.com/mcsheaj/aws-playground/master/bootstrap/bootstrap-wordpress-linux2.sh  \n",
-                                "chmod 755 /tmp/bootstrap-wordpress-linux2.sh\n",
+                                "chmod 700 /tmp/bootstrap-wordpress-linux2.sh\n",
                                 "/tmp/bootstrap-wordpress-linux2.sh",
                                 "\n"
                             ]
