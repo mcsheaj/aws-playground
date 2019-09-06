@@ -481,10 +481,10 @@
                     "Statement": [
                         {
                             "Effect": "Allow",
+                            "Action": "sts:AssumeRole",
                             "Principal": {
                                 "Service": "ec2.amazonaws.com"
-                            },
-                            "Action": "sts:AssumeRole"
+                            }
                         }
                     ]
                 },
@@ -526,21 +526,23 @@
                             "Version": "2012-10-17",
                             "Statement": [
                                 {
+                                    "Effect": "Allow",
                                     "Action": [
                                         "ec2:DescribeTags"
                                     ],
-                                    "Resource": "*",
-                                    "Effect": "Allow"
+                                    "Resource": "*"
                                 },
                                 {
+                                    "Effect": "Allow",
                                     "Action": [
                                         "ec2:CreateTags"
                                     ],
                                     "Resource": "*",
-                                    "Effect": "Allow",
                                     "Condition": {
                                         "StringEquals": {
-                                            "ec2:ResourceTag/StackName": "WpBastion"
+                                            "ec2:ResourceTag/StackName": {
+                                                "Fn::Sub": "${AWS::StackName}"
+                                            }
                                         }
                                     }
                                 }
@@ -668,7 +670,10 @@
                                             "yum -y update\n"
                                         ]
                                     ]
-                                }
+                                },
+                                "mode": "000700",
+                                "owner": "root",
+                                "group": "root"              
                             }
                         },
                         "commands" : {
@@ -745,7 +750,7 @@
                                 },
                                 "\n",
                                 "wget --no-cache -O /tmp/bootstrap-bastion.sh https://raw.githubusercontent.com/mcsheaj/aws-playground/master/bootstrap/bootstrap-bastion.sh \n",
-                                "chmod 750 /tmp/bootstrap-bastion.sh\n",
+                                "chmod 700 /tmp/bootstrap-bastion.sh\n",
                                 "/tmp/bootstrap-bastion.sh\n"
                             ]
                         ]
