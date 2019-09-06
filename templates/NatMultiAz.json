@@ -421,36 +421,36 @@
                 },
                 "SecurityGroupIngress": [
                     {
-                        "CidrIp": {
-                            "Ref": "VpcCidr"
-                        },
                         "IpProtocol": "tcp",
                         "FromPort": 22,
-                        "ToPort": 22
-                    },
-                    {
+                        "ToPort": 22,
                         "CidrIp": {
                             "Ref": "VpcCidr"
-                        },
+                        }
+                    },
+                    {
                         "IpProtocol": "tcp",
                         "FromPort": 80,
-                        "ToPort": 80
-                    },
-                    {
+                        "ToPort": 80,
                         "CidrIp": {
                             "Ref": "VpcCidr"
-                        },
+                        }
+                    },
+                    {
                         "IpProtocol": "tcp",
                         "FromPort": 443,
-                        "ToPort": 443
-                    },
-                    {
+                        "ToPort": 443,
                         "CidrIp": {
                             "Ref": "VpcCidr"
-                        },
-                        "FromPort": -1,
+                        }
+                    },
+                    {
                         "IpProtocol": "icmp",
-                        "ToPort": -1
+                        "FromPort": -1,
+                        "ToPort": -1,
+                        "CidrIp": {
+                            "Ref": "VpcCidr"
+                        }
                     }
                 ],
                 "SecurityGroupEgress": [
@@ -467,10 +467,10 @@
                         "CidrIp": "0.0.0.0/0"
                     },
                     {
-                        "CidrIp": "0.0.0.0/0",
-                        "FromPort": -1,
                         "IpProtocol": "icmp",
-                        "ToPort": -1
+                        "FromPort": -1,
+                        "ToPort": -1,
+                        "CidrIp": "0.0.0.0/0"
                     }
                 ],
                 "Tags": [
@@ -539,11 +539,11 @@
                                     }
                                 },
                                 {
+                                    "Effect": "Allow",
                                     "Action": "iam:GetGroup",
                                     "Resource": {
                                         "Fn::Sub": "arn:aws:iam::${AWS::AccountId}:group/${AdministratorsGroup}"
-                                    },
-                                    "Effect": "Allow"
+                                    }
                                 }
                             ]
                         }
@@ -554,23 +554,41 @@
                             "Version": "2012-10-17",
                             "Statement": [
                                 {
-                                    "Action": [
-                                        "ec2:CreateTags",
-                                        "ec2:DescribeTags"
-                                    ],
                                     "Effect": "Allow",
+                                    "Action": [
+                                        "ec2:DescribeTags",
+                                        "ec2:ModifyInstanceAttribute",
+                                        "ec2:DescribeRouteTables"
+                                    ],
                                     "Resource": "*"
+                                },
+                                {
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "ec2:CreateTags"
+                                    ],
+                                    "Resource": "*",
+                                    "Condition": {
+                                        "StringEquals": {
+                                            "ec2:ResourceTag/StackName": {
+                                                "Fn::Sub": "${AWS::StackName}"
+                                            }
+                                        }
+                                    }
                                 },
                                 {
                                     "Effect": "Allow",
                                     "Action": [
                                         "ec2:CreateRoute",
                                         "ec2:DeleteRoute",
-                                        "ec2:ModifyInstanceAttribute",
-                                        "ec2:ReplaceRoute",
-                                        "ec2:DescribeRouteTables"
+                                        "ec2:ReplaceRoute"
                                     ],
-                                    "Resource": "*"
+                                    "Resource": "*",
+                                    "Condition": {
+                                        "StringEquals": {
+                                            "ec2:ResourceTag/Network": "Private"
+                                        }
+                                    }
                                 }
                             ]
                         }
@@ -613,10 +631,116 @@
                         "PropagateAtLaunch": true
                     }
                 ]
+            },
+            "CreationPolicy": {
+              "ResourceSignal": {
+                "Count": {
+                    "Ref": "InstanceCapacity"
+                },
+                "Timeout": "PT15M"
+              }
+            },
+            "UpdatePolicy": {
+                "AutoScalingRollingUpdate": {
+                    "MinInstancesInService": {
+                        "Ref": "InstanceCapacity"
+                    },
+                    "MaxBatchSize": "1",
+                    "PauseTime": "PT15M",
+                    "WaitOnResourceSignals": "true"
+                }
             }
         },
         "LaunchConfig": {
             "Type": "AWS::AutoScaling::LaunchConfiguration",
+            "Metadata": {
+                "AWS::CloudFormation::Init": {
+                    "configSets": {
+                        "cfn_install": [
+                            "install_cfn"
+                        ]
+                    },
+                    "install_cfn": {
+                        "files": {
+                            "/etc/cfn/cfn-hup.conf": {
+                                "content": {
+                                    "Fn::Join": [
+                                        "",
+                                        [
+                                            "[main]\n",
+                                            "stack=",
+                                            {
+                                                "Ref": "AWS::StackId"
+                                            },
+                                            "\n",
+                                            "region=",
+                                            {
+                                                "Ref": "AWS::Region"
+                                            },
+                                            "\n"
+                                        ]
+                                    ]
+                                },
+                                "mode": "000400",
+                                "owner": "root",
+                                "group": "root"
+                            },
+                            "/etc/cfn/hooks.d/cfn-auto-reloader.conf": {
+                                "content": {
+                                    "Fn::Join": [
+                                        "",
+                                        [
+                                            "[cfn-auto-reloader-hook]\n",
+                                            "triggers=post.update\n",
+                                            "path=Resources.LaunchConfig.Metadata.AWS::CloudFormation::Init\n",
+                                            "action=/sbin/aws-update-nat.sh\n"
+                                        ]
+                                    ]
+                                },
+                                "mode": "000400",
+                                "owner": "root",
+                                "group": "root"
+                            },
+                            "/sbin/aws-update-nat.sh": {
+                                "content": {
+                                    "Fn::Join": [
+                                        "",
+                                        [
+                                            "#!/bin/bash -xe\n",
+                                            "\n",
+                                            "echo $1\n",
+                                            "\n",
+                                            "# Update this script before updating the stack to perform custom logic within 15 minutes of the update\n",
+                                            "yum -y update\n"
+                                        ]
+                                    ]
+                                },
+                                "mode": "000700",
+                                "owner": "root",
+                                "group": "root"              
+                            }
+                        },
+                        "commands" : {
+                            "aws_update_bastion" : {
+                                "command" : "/sbin/aws-update-nat.sh MetadataVersion=1"
+                            }
+                        },
+                        "services": {
+                            "sysvinit": {
+                                "cfn-hup": {
+                                    "enabled": "true",
+                                    "ensureRunning": "true",
+                                    "files": [
+                                        "/etc/cfn/cfn-hup.conf",
+                                        "/etc/cfn/hooks.d/cfn-auto-reloader.conf",
+                                        "/sbin/aws-update-nat.sh"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
             "Properties": {
                 "ImageId": {
                     "Fn::FindInMap": [
@@ -657,6 +781,8 @@
                             [
                                 "#!/bin/bash -xe\n",
                                 "\n",
+                                "echo UserDataVersion=1",
+                                "\n",
                                 "export ADMIN_GROUP=",
                                 {
                                     "Ref": "AdministratorsGroup"
@@ -668,7 +794,7 @@
                                 },
                                 "\n",
                                 "wget --no-cache -O /tmp/bootstrap-nat-linux2.sh https://raw.githubusercontent.com/mcsheaj/aws-playground/master/bootstrap/bootstrap-nat-linux2.sh\n",
-                                "chmod 755 /tmp/bootstrap-nat-linux2.sh\n",
+                                "chmod 700 /tmp/bootstrap-nat-linux2.sh\n",
                                 "/tmp/bootstrap-nat-linux2.sh\n"
                             ]
                         ]
