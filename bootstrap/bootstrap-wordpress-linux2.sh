@@ -41,10 +41,10 @@ fi
 # BEGIN WordPress Setup
 ################################################################################
 
-DB_HOST=$(awk -F "=" '/DB_SERVER/ {print $2}' /root/.aws/bootstrap.properties)
 DB_USER=$(awk -F "=" '/DB_USER/ {print $2}' /root/.aws/bootstrap.properties)
-DB_PASS=$(awk -F "=" '/DB_PASSWORD/ {print $2}' /root/.aws/bootstrap.properties)
-DB_SERVER=$(awk -F "=" '/DB_DATABASE/ {print $2}' /root/.aws/bootstrap.properties)
+DB_PASSWORD=$(awk -F "=" '/DB_PASSWORD/ {print $2}' /root/.aws/bootstrap.properties)
+DB_DATABASE=$(awk -F "=" '/DB_DATABASE/ {print $2}' /root/.aws/bootstrap.properties)
+DB_SERVER=$(awk -F "=" '/DB_SERVER/ {print $2}' /root/.aws/bootstrap.properties)
 
 # Install amazon linux extras lamp
 amazon-linux-extras install -y lamp-mariadb10.2-php7.2 php7.2
