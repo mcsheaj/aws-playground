@@ -564,7 +564,7 @@
                 "MinSize": {
                     "Ref": "InstanceCapacity"
                 },
-                "MaxSize": "2",
+                "MaxSize": "5",
                 "DesiredCapacity": {
                     "Ref": "InstanceCapacity"
                 },
