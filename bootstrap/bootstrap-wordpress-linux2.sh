@@ -64,6 +64,9 @@ wget --no-cache -O /etc/httpd/conf.d/ssl.conf https://raw.githubusercontent.com/
 rm -rf /var/www/bak
 mkdir /var/www/bak
 
+echo "<?php phpinfo() ?>" > /var/www/html/info.php
+echo "<html><head><title>Coming Soon</title></head><body><h2>Coming Soon</h2></body></html>" > /var/www/html/index.html
+
 # Get intellipoint wordpress files from S3 and move to /var/www/html
 BACKUP=$(aws s3api list-objects --bucket ${AWS_BUCKET} --prefix backup/intellipoint-hourly/intellipoint- --query "Contents[?contains(Key, '.tar.gz')] | reverse(sort_by(@, &LastModified)) | [0]" | jq .Key -r)
 aws s3 cp s3://${AWS_BUCKET}/${BACKUP} /tmp/intellipointsolutions.com.tar.gz
@@ -110,6 +113,22 @@ chown -R apache:apache speasyforms.intellipointsolutions.com
 mv -f /var/www/speasyforms.intellipointsolutions.com /var/www/bak | true
 mv -f speasyforms.intellipointsolutions.com /var/www
 rm -rf speasyforms.intellipointsolutions.com
+
+# Get rem.intellipoint files from S3 and move to /var/www/rem.intellipointsolutions.com
+BACKUP=$(aws s3api list-objects --bucket ${AWS_BUCKET} --prefix backup/rem-hourly/rem- --query "Contents[?contains(Key, '.tar.gz')] | reverse(sort_by(@, &LastModified)) | [0]" | jq .Key -r)
+aws s3 cp s3://${AWS_BUCKET}/${BACKUP} /tmp/rem.intellipointsolutions.com.tar.gz
+tar -xzf rem.intellipointsolutions.com.tar.gz
+rm -rf rem.intellipointsolutions.com.tar.gz
+DB_REM=$(echo ${DB_DATABASE} | sed 's/intellipoint_/rem_/')
+sed -i "s/define( *'DB_USER', '.*' *);/define( 'DB_USER', '${DB_USER}' );/" rem.intellipointsolutions.com/html/wp-config.php
+sed -i "s/define( *'DB_PASSWORD', '.*' *);/define( 'DB_PASSWORD', '${DB_PASSWORD}' );/" rem.intellipointsolutions.com/html/wp-config.php
+sed -i "s/define( *'DB_NAME', '.*' *);/define( 'DB_NAME', '${DB_REM}' );/" rem.intellipointsolutions.com/html/wp-config.php
+sed -i "s/define( *'DB_HOST', '.*' *);/define( 'DB_HOST', '${DB_SERVER}' );/" rem.intellipointsolutions.com/html/wp-config.php
+echo "<?php phpinfo() ?>" > rem.intellipointsolutions.com/html/info.php
+chown -R apache:apache rem.intellipointsolutions.com
+mv -f /var/www/rem.intellipointsolutions.com /var/www/bak | true
+mv -f rem.intellipointsolutions.com /var/www
+rm -rf rem.intellipointsolutions.com
 
 # Setup the backup script
 wget --no-cache -O /etc/cron.d/aws-wordpress-backup.cron https://raw.githubusercontent.com/mcsheaj/aws-playground/master/scripts/aws-wordpress-backup.cron
