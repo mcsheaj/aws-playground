@@ -691,7 +691,7 @@
                 "HealthCheckPort": "80",
                 "HealthCheckProtocol": "HTTP",
                 "Matcher": {
-                    "HttpCode" : "301"
+                    "HttpCode" : "200"
                 },
                 "Port": 80,
                 "Protocol": "HTTP",
