@@ -138,8 +138,8 @@ chmod 700 /sbin/aws-wordpress-backup.sh
 systemctl restart crond
 
 # Start the httpd service and configure it to start on boot
-sudo systemctl enable httpd
-sudo systemctl start httpd
+systemctl enable httpd
+systemctl start httpd
 
 ################################################################################
 # END WordPress Setup
