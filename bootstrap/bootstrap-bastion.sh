@@ -41,9 +41,9 @@ else
     NEW_NAME=${NAME}
 fi
 
-# Move sshd to port 2222
-#sed -i "s/#Port 22/Port 2222/" /etc/ssh/sshd_config
-#systemctl restart sshd
+# Move sshd to port 2442
+sed -i "s/#Port 22/Port 2442/" /etc/ssh/sshd_config
+systemctl restart sshd
 
 # Install the RedHat epel yum repo
 yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm | true
@@ -58,12 +58,12 @@ systemctl start iptables | true
 # Configure iptables:
 # 1. accept anything on the loopback adapter
 # 2. accept incoming packets that belong to a connection that has already been established (using the state module)
-# 3. accept tcp on port 2222 (where we're running sshd)
+# 3. accept tcp on port 2442 (where we're running sshd)
 # 4. drop anything else
 # and persist the config
 iptables -A INPUT -i lo -j ACCEPT
 iptables -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
-iptables -A INPUT -p tcp -m tcp --dport 22 -j ACCEPT
+iptables -A INPUT -p tcp -m tcp --dport 2442 -j ACCEPT
 iptables -A INPUT -j DROP
 iptables-save > /etc/sysconfig/iptables
 
@@ -71,14 +71,15 @@ iptables-save > /etc/sysconfig/iptables
 systemctl enable fail2ban
 systemctl start fail2ban
 
-# Configure fail2ban
+# Configure fail2ban by copying jail.conf to jail.local and:
 # 1. lower maxretry to 3
-# 2. enable the sshd-iptables jail
+# 2. enable the sshd-iptables jail.local
+# 3. change the ssh port to 2442 in the jail.local
 # and restart fail2ban
 cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
 sed -i "s/maxretry = 5/maxretry = 3/" /etc/fail2ban/jail.local
 sed -i "s/^\[sshd\]/[sshd]\nenabled=true/" /etc/fail2ban/jail.local
-#sed -i "s/port *= *ssh/port    = 2222/" /etc/fail2ban/jail.local
+sed -i "s/port *= *ssh/port    = 2442/" /etc/fail2ban/jail.local
 systemctl restart fail2ban
 
 # Run system updates
