@@ -46,7 +46,7 @@ sed -i "s/#Port 22/Port 2442/" /etc/ssh/sshd_config
 systemctl restart sshd
 
 # Also run on 22 temporarily
-/sbin/sshd -p 22
+#/sbin/sshd -p 22
 
 # Install the RedHat epel yum repo
 yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm | true
@@ -67,7 +67,7 @@ systemctl start iptables | true
 iptables -F
 iptables -A INPUT -i lo -j ACCEPT
 iptables -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
-iptables -A INPUT -p tcp -m tcp --dport 22 -j ACCEPT
+#iptables -A INPUT -p tcp -m tcp --dport 22 -j ACCEPT
 iptables -A INPUT -p tcp -m tcp --dport 2442 -j ACCEPT
 iptables -A INPUT -j DROP
 iptables-save > /etc/sysconfig/iptables
