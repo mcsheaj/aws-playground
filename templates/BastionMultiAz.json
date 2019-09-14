@@ -588,7 +588,6 @@
             }
         },
         "BastionProfile": {
-            "Condition": "CreateIAMRole",
             "Type": "AWS::IAM::InstanceProfile",
             "Properties": {
                 "Roles": [
