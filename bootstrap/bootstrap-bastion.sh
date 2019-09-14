@@ -61,6 +61,7 @@ systemctl start iptables | true
 # Configure iptables:
 # 1. accept anything on the loopback adapter
 # 2. accept incoming packets that belong to a connection that has already been established (using the state module)
+# 3. accept udp on ports 67:68 (DHCP)
 # 3. accept tcp on port 2442 (where we're running sshd)
 # 4. drop anything else
 # and persist the config
@@ -68,6 +69,7 @@ iptables -F
 iptables -A INPUT -i lo -j ACCEPT
 iptables -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
 #iptables -A INPUT -p tcp -m tcp --dport 22 -j ACCEPT
+iptables -A INPUT -p udp --dport 67:68 --sport 67:68 -j ACCEPT
 iptables -A INPUT -p tcp -m tcp --dport 2442 -j ACCEPT
 iptables -A INPUT -j DROP
 iptables-save > /etc/sysconfig/iptables
@@ -86,6 +88,13 @@ sed -i "s/maxretry = 5/maxretry = 3/" /etc/fail2ban/jail.local
 sed -i "s/^\[sshd\]/[sshd]\nenabled=true/" /etc/fail2ban/jail.local
 sed -i "s/port *= *ssh/port    = 2442/" /etc/fail2ban/jail.local
 systemctl restart fail2ban
+
+# Shutdown RPC bind (used for NFS, not need on this server)
+systemctl stop rpcbind
+systemctl disable rpcbind
+
+# Print a list of open ports
+lsof -i -n -P
 
 # Run system updates
 yum -y update

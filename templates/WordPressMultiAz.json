@@ -620,7 +620,7 @@
                     },
                     {
                         "Key": "Network",
-                        "Value": "Private"
+                        "Value": "Public"
                     }
                 ]
             }
@@ -959,7 +959,7 @@
                 ]
             }
         },
-        "WordPressGroup": {
+        "WordPressScalingGroup": {
             "Type": "AWS::AutoScaling::AutoScalingGroup",
             "Properties": {
                 "VPCZoneIdentifier": {

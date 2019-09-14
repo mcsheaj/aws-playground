@@ -29,8 +29,16 @@
                     },
                     "Parameters": [
                         "AdministratorsGroup",
-                        "KeyPairName",
-                        "SshSourceCidr",
+                        "SshSourceCidr"
+                    ]
+                },
+                {
+                    "Label": {
+                        "default": "Optional Settings"
+                    },
+                    "Parameters": [
+                        "AlternativeIAMRole",
+                        "AlternativeSecurityGroupId",
                         "MotdBanner"
                     ]
                 }
@@ -51,14 +59,17 @@
                 "AdministratorsGroup": {
                     "default": "Administrators IAM Group"
                 },
-                "KeyPairName": {
-                    "default": "Key Pair"
+                "SshSourceCidr": {
+                    "default": "SSH Source CIDR"
+                },
+                "AlternativeIAMRole": {
+                    "default": "Alternative EC2 IAM Role"
+                },
+                "AlternativeSecurityGroupId": {
+                    "default": "Alternative Security Group Id"
                 },
                 "MotdBanner": {
                     "default": "Login Banner"
-                },
-                "SshSourceCidr": {
-                    "default": "SSH Source CIDR"
                 }
             }
         }
@@ -152,10 +163,6 @@
             "Description": "Name of an IAM group from which user accounts will be created and keys copied if they've configured a CodeCommit key (required). By default, aws-ec2-ssh will pull in all IAM accounts as local accounts. I'd prefer to only pull IAM accounts from a particular IAM group, so this template won't even work if this isn't the name of a real IAM group (or at least, aws-ec2-ssh won't work).",
             "ConstraintDescription": "must be the name of a valid IAM group, and if none of the users have CodeCommit keys there will be no way to connect to instances"
         },
-        "KeyPairName": {
-            "Description": "Enter a Public/private key pair to use for the ec2-user account. If you do not have one in this region, please create it before continuing. This is a fallback way to connect in case aws-ec2-ssh doesn't work and you need to debug it. Only one person should have the private key, and it and the ec2-user account should be deleted once you've confirmed that aws-ec2-ssh worked.",
-            "Type": "AWS::EC2::KeyPair::KeyName"
-        },
         "SshSourceCidr": {
             "Description": "The IP address range that can be used to SSH to the EC2 bastion instances",
             "Type": "String",
@@ -164,8 +171,18 @@
             "Default": "0.0.0.0/0",
             "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
             "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
-          },
-          "MotdBanner": {
+        },
+        "AlternativeIAMRole": {
+            "Description": "Specify an existing IAM Role name to attach to the bastion, if left blank a new role will be created.",
+            "Default": "",
+            "Type": "String"
+        },
+        "AlternativeSecurityGroupId": {
+            "Description": "Specify an existing Security Group Id to attach to the bastion, if left blank a new security Group will be created.",
+            "Default": "",
+            "Type": "String"
+        },
+        "MotdBanner": {
             "Default": "https://raw.githubusercontent.com/mcsheaj/aws-playground/master/scripts/motd.sh",
             "Description": "Banner text to display upon login.",
             "Type": "String"
@@ -437,6 +454,24 @@
             }
         }
     },
+    "Conditions": {
+        "CreateIAMRole": {
+            "Fn::Equals": [
+                {
+                    "Ref": "AlternativeIAMRole"
+                },
+                ""
+            ]
+        },
+        "CreateSecurityGroup": {
+            "Fn::Equals": [
+                {
+                    "Ref": "AlternativeSecurityGroupId"
+                },
+                ""
+            ]
+        }
+    },
     "Resources": {
         "BastionSecurityGroup": {
             "Type": "AWS::EC2::SecurityGroup",
@@ -459,6 +494,18 @@
                     {
                         "Key": "Name",
                         "Value": "BastionSG"
+                    },
+                    {
+                        "Key": "StackName",
+                        "Value": {
+                            "Fn::Sub": "${AWS::StackName}"
+                        },
+                        "PropagateAtLaunch": true
+                    },
+                    {
+                        "Key": "Network",
+                        "Value": "Public",
+                        "PropagateAtLaunch": true
                     }
                 ]
             }
@@ -468,7 +515,15 @@
             "Properties": {
                 "Roles": [
                     {
-                        "Ref": "BastionRole"
+                        "Fn::If": [
+                            "CreateIAMRole",
+                            {
+                                "Ref": "BastionRole"
+                            },
+                            {
+                                "Ref": "AlternativeIAMRole"
+                            }
+                        ]
                     }
                 ]
             }
@@ -722,12 +777,17 @@
                 "IamInstanceProfile": {
                     "Ref": "BastionProfile"
                 },
-                "KeyName": {
-                    "Ref": "KeyPairName"
-                },
                 "SecurityGroups": [
                     {
-                        "Ref": "BastionSecurityGroup"
+                        "Fn::If": [
+                            "CreateSecurityGroup",
+                            {
+                                "Ref": "BastionSecurityGroup"
+                            },
+                            {
+                                "Ref": "AlternativeSecurityGroupId"
+                            }
+                        ]
                     }
                 ],
                 "UserData": {
