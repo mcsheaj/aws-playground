@@ -64,6 +64,7 @@ systemctl start iptables | true
 # 3. accept tcp on port 2442 (where we're running sshd)
 # 4. drop anything else
 # and persist the config
+iptables -F
 iptables -A INPUT -i lo -j ACCEPT
 iptables -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
 iptables -A INPUT -p tcp -m tcp --dport 22 -j ACCEPT
