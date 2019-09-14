@@ -46,15 +46,15 @@ fi
 #systemctl restart sshd
 
 # Install the RedHat epel yum repo
-yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm | true
 
 # Install iptables-service and fail2ban from the epel repo
-yum -y install iptables-service 
+yum -y install iptables-services | true
 #fail2ban
 
 # Enable iptables to start on boot, and start it now
-systemctl enable iptables
-systemctl start iptables
+systemctl enable iptables | true
+systemctl start iptables | true
 
 # Configure iptables:
 # 1. accept anything on the loopback adapter
