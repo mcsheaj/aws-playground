@@ -32,7 +32,7 @@ else
     yum -y install git
     wget --no-cache https://raw.githubusercontent.com/mcsheaj/aws-ec2-ssh/master/install.sh
     chmod 755 install.sh
-    ./install.sh
+    ./install.sh -s '##ALL##'
 fi
 
 # Update the instance name to include the stack name
