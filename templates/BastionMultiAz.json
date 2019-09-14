@@ -28,7 +28,6 @@
                         "default": "Security Settings"
                     },
                     "Parameters": [
-                        "AdministratorsGroup",
                         "SshSourceCidr"
                     ]
                 },
@@ -37,6 +36,7 @@
                         "default": "Optional Security Settings"
                     },
                     "Parameters": [
+                        "AdministratorsGroup",
                         "AlternativeIAMRole",
                         "AlternativeSecurityGroupId",
                         "MotdBanner"
@@ -169,7 +169,7 @@
         },
         "AdministratorsGroup": {
             "Type": "String",
-            "Description": "Name of an IAM group from which user accounts will be created and keys copied if they've configured a CodeCommit key (required). Technically you can leave this blank, but by default, aws-ec2-ssh will pull no users in the sudo group which will make the machine unmanageable.",
+            "Description": "Name of an IAM group from which user accounts will be created and keys copied if they've configured a CodeCommit key (required). If you leave this blank, by default aws-ec2-ssh will pull all users with a CodeCommit key into local accounts and grant them sudo access.",
             "ConstraintDescription": "must be the name of a valid IAM group, and if none of the users have CodeCommit keys there will be no way to connect to instances"
         },
         "AlternativeIAMRole": {
