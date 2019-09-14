@@ -29,7 +29,10 @@ then
     chmod 755 install.sh
     ./install.sh -i ${ADMIN_GROUP} -s ${ADMIN_GROUP}
 else 
-    echo "No ADMIN_GROUP specified, skipping aws-ect-ssh configuration"
+    yum -y install git
+    wget --no-cache https://raw.githubusercontent.com/mcsheaj/aws-ec2-ssh/master/install.sh
+    chmod 755 install.sh
+    ./install.sh
 fi
 
 # Update the instance name to include the stack name

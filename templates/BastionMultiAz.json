@@ -28,15 +28,15 @@
                         "default": "Security Settings"
                     },
                     "Parameters": [
-                        "AdministratorsGroup",
                         "SshSourceCidr"
                     ]
                 },
                 {
                     "Label": {
-                        "default": "Optional Settings"
+                        "default": "Optional Security Settings"
                     },
                     "Parameters": [
+                        "AdministratorsGroup",
                         "AlternativeIAMRole",
                         "AlternativeSecurityGroupId",
                         "MotdBanner"
@@ -63,10 +63,10 @@
                     "default": "SSH Source CIDR"
                 },
                 "AlternativeIAMRole": {
-                    "default": "Alternative EC2 IAM Role"
+                    "default": "Alt EC2 IAM Role"
                 },
                 "AlternativeSecurityGroupId": {
-                    "default": "Alternative Security Group Id"
+                    "default": "Alt Security Group Id"
                 },
                 "MotdBanner": {
                     "default": "Login Banner"
@@ -158,11 +158,6 @@
             "MaxValue": "1",
             "ConstraintDescription": "Must be between 0 and 2 EC2 instances. Zero is allowed because we may only want to run one of these when performing administration, instead of 24/7 365."
         },
-        "AdministratorsGroup": {
-            "Type": "String",
-            "Description": "Name of an IAM group from which user accounts will be created and keys copied if they've configured a CodeCommit key (required). By default, aws-ec2-ssh will pull in all IAM accounts as local accounts. I'd prefer to only pull IAM accounts from a particular IAM group, so this template won't even work if this isn't the name of a real IAM group (or at least, aws-ec2-ssh won't work).",
-            "ConstraintDescription": "must be the name of a valid IAM group, and if none of the users have CodeCommit keys there will be no way to connect to instances"
-        },
         "SshSourceCidr": {
             "Description": "The IP address range that can be used to SSH to the EC2 bastion instances",
             "Type": "String",
@@ -171,6 +166,11 @@
             "Default": "0.0.0.0/0",
             "AllowedPattern": "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})",
             "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+        },
+        "AdministratorsGroup": {
+            "Type": "String",
+            "Description": "Name of an IAM group from which user accounts will be created and keys copied if they've configured a CodeCommit key (required). By default, aws-ec2-ssh will pull in all IAM accounts as local accounts.",
+            "ConstraintDescription": "must be the name of a valid IAM group, and if none of the users have CodeCommit keys there will be no way to connect to instances"
         },
         "AlternativeIAMRole": {
             "Description": "Specify an existing IAM Role name to attach to the bastion, if left blank a new role will be created.",
@@ -183,8 +183,8 @@
             "Type": "String"
         },
         "MotdBanner": {
-            "Default": "https://raw.githubusercontent.com/mcsheaj/aws-playground/master/scripts/motd.sh",
-            "Description": "Banner text to display upon login.",
+            "Default": "",
+            "Description": "Banner text to display upon login, if left blank the motd banner will be left alone.",
             "Type": "String"
         }
     },
@@ -474,6 +474,7 @@
     },
     "Resources": {
         "BastionSecurityGroup": {
+            "Condition": "CreateSecurityGroup",
             "Type": "AWS::EC2::SecurityGroup",
             "Properties": {
                 "GroupDescription": "ssh",
@@ -499,36 +500,17 @@
                         "Key": "StackName",
                         "Value": {
                             "Fn::Sub": "${AWS::StackName}"
-                        },
-                        "PropagateAtLaunch": true
+                        }
                     },
                     {
                         "Key": "Network",
-                        "Value": "Public",
-                        "PropagateAtLaunch": true
-                    }
-                ]
-            }
-        },
-        "BastionProfile": {
-            "Type": "AWS::IAM::InstanceProfile",
-            "Properties": {
-                "Roles": [
-                    {
-                        "Fn::If": [
-                            "CreateIAMRole",
-                            {
-                                "Ref": "BastionRole"
-                            },
-                            {
-                                "Ref": "AlternativeIAMRole"
-                            }
-                        ]
+                        "Value": "Public"
                     }
                 ]
             }
         },
         "BastionRole": {
+            "Condition": "CreateIAMRole",
             "Type": "AWS::IAM::Role",
             "Properties": {
                 "AssumeRolePolicyDocument": {
@@ -551,26 +533,24 @@
                             "Version": "2012-10-17",
                             "Statement": [
                                 {
-                                    "Effect": "Allow",
                                     "Action": "iam:ListUsers",
-                                    "Resource": "*"
+                                    "Resource": "*",
+                                    "Effect": "Allow"
                                 },
                                 {
-                                    "Effect": "Allow",
                                     "Action": [
                                         "iam:ListSSHPublicKeys",
                                         "iam:GetSSHPublicKey"
                                     ],
                                     "Resource": {
                                         "Fn::Sub": "arn:aws:iam::${AWS::AccountId}:user/*"
-                                    }
+                                    },
+                                    "Effect": "Allow"
                                 },
                                 {
-                                    "Effect": "Allow",
                                     "Action": "iam:GetGroup",
-                                    "Resource": {
-                                        "Fn::Sub": "arn:aws:iam::${AWS::AccountId}:group/${AdministratorsGroup}"
-                                    }
+                                    "Resource": "*",
+                                    "Effect": "Allow"
                                 }
                             ]
                         }
@@ -581,28 +561,47 @@
                             "Version": "2012-10-17",
                             "Statement": [
                                 {
-                                    "Effect": "Allow",
                                     "Action": [
                                         "ec2:DescribeTags"
                                     ],
-                                    "Resource": "*"
+                                    "Resource": "*",
+                                    "Effect": "Allow"
                                 },
                                 {
-                                    "Effect": "Allow",
-                                    "Action": [
-                                        "ec2:CreateTags"
-                                    ],
-                                    "Resource": "*",
                                     "Condition": {
                                         "StringEquals": {
                                             "ec2:ResourceTag/StackName": {
                                                 "Fn::Sub": "${AWS::StackName}"
                                             }
                                         }
-                                    }
+                                    },
+                                    "Action": [
+                                        "ec2:CreateTags"
+                                    ],
+                                    "Resource": "*",
+                                    "Effect": "Allow"
                                 }
                             ]
                         }
+                    }
+                ]
+            }
+        },
+        "BastionProfile": {
+            "Condition": "CreateIAMRole",
+            "Type": "AWS::IAM::InstanceProfile",
+            "Properties": {
+                "Roles": [
+                    {
+                        "Fn::If": [
+                            "CreateIAMRole",
+                            {
+                                "Ref": "BastionRole"
+                            },
+                            {
+                                "Ref": "AlternativeIAMRole"
+                            }
+                        ]
                     }
                 ]
             }
