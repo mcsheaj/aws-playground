@@ -451,8 +451,8 @@
                             "Ref": "SshSourceCidr"
                         },
                         "IpProtocol": "tcp",
-                        "FromPort": 22,
-                        "ToPort": 22
+                        "FromPort": 2442,
+                        "ToPort": 2442
                     }
                 ],
                 "Tags": [
