@@ -63,24 +63,25 @@ systemctl start iptables | true
 # and persist the config
 iptables -A INPUT -i lo -j ACCEPT
 iptables -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+iptables -A INPUT -p tcp -m tcp --dport 22 -j ACCEPT
 iptables -A INPUT -p tcp -m tcp --dport 2442 -j ACCEPT
 iptables -A INPUT -j DROP
 iptables-save > /etc/sysconfig/iptables
 
 # Enable fail2ban to start on boot, and start it now
-systemctl enable fail2ban
-systemctl start fail2ban
+# systemctl enable fail2ban
+# systemctl start fail2ban
 
 # Configure fail2ban by copying jail.conf to jail.local and:
 # 1. lower maxretry to 3
 # 2. enable the sshd-iptables jail.local
 # 3. change the ssh port to 2442 in the jail.local
 # and restart fail2ban
-cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
-sed -i "s/maxretry = 5/maxretry = 3/" /etc/fail2ban/jail.local
-sed -i "s/^\[sshd\]/[sshd]\nenabled=true/" /etc/fail2ban/jail.local
-sed -i "s/port *= *ssh/port    = 2442/" /etc/fail2ban/jail.local
-systemctl restart fail2ban
+# cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
+# sed -i "s/maxretry = 5/maxretry = 3/" /etc/fail2ban/jail.local
+# sed -i "s/^\[sshd\]/[sshd]\nenabled=true/" /etc/fail2ban/jail.local
+# sed -i "s/port *= *ssh/port    = 2442/" /etc/fail2ban/jail.local
+# systemctl restart fail2ban
 
 # Run system updates
 yum -y update
