@@ -42,8 +42,11 @@ else
 fi
 
 # Move sshd to port 2442
-#sed -i "s/#Port 22/Port 2442/" /etc/ssh/sshd_config
+sed -i "s/#Port 22/Port 2442/" /etc/ssh/sshd_config
 systemctl restart sshd
+
+# Also run on 22 temporarily
+/sbin/sshd -p 22
 
 # Install the RedHat epel yum repo
 yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm | true
