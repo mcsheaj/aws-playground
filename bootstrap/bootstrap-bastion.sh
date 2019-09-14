@@ -49,8 +49,7 @@ fi
 yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm | true
 
 # Install iptables-service and fail2ban from the epel repo
-yum -y install iptables-services | true
-#fail2ban
+yum -y install iptables-services fail2ban | true
 
 # Enable iptables to start on boot, and start it now
 systemctl enable iptables | true
@@ -69,18 +68,18 @@ iptables -A INPUT -j DROP
 iptables-save > /etc/sysconfig/iptables
 
 # Enable fail2ban to start on boot, and start it now
-#systemctl enable fail2ban
-#systemctl start fail2ban
+systemctl enable fail2ban
+systemctl start fail2ban
 
 # Configure fail2ban
 # 1. lower maxretry to 3
 # 2. enable the sshd-iptables jail
 # and restart fail2ban
-#cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
-#sed -i "s/maxretry = 5/maxretry = 3/" /etc/fail2ban/jail.local
-#sed -i "s/^\[sshd\]/[sshd]\nenabled=true/" /etc/fail2ban/jail.local
+cp /etc/fail2ban/jail.conf /etc/fail2ban/jail.local
+sed -i "s/maxretry = 5/maxretry = 3/" /etc/fail2ban/jail.local
+sed -i "s/^\[sshd\]/[sshd]\nenabled=true/" /etc/fail2ban/jail.local
 #sed -i "s/port *= *ssh/port    = 2222/" /etc/fail2ban/jail.local
-#systemctl restart fail2ban
+systemctl restart fail2ban
 
 # Run system updates
 yum -y update
