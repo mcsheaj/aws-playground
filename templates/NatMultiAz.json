@@ -615,7 +615,7 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "Nat-AMZN2",
+                        "Value": "Nat",
                         "PropagateAtLaunch": true
                     },
                     {
