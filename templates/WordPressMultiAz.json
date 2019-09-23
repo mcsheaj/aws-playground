@@ -986,7 +986,7 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "WordPress-AMZN2",
+                        "Value": "WordPress",
                         "PropagateAtLaunch": true
                     },
                     {
