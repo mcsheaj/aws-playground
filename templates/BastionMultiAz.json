@@ -624,7 +624,7 @@
                 "Tags": [
                     {
                         "Key": "Name",
-                        "Value": "Bastion-AMZN2",
+                        "Value": "Bastion",
                         "PropagateAtLaunch": true
                     },
                     {
