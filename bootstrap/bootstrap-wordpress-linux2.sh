@@ -62,7 +62,7 @@ yum install -y mod_ssl
 wget --no-cache -O /etc/httpd/conf.d/ssl.conf https://raw.githubusercontent.com/mcsheaj/aws-playground/master/scripts/ssl-l2.conf
 
 # Enable gzip compression
-cat << EOF > /root/.aws/bootstrap.properties
+cat << EOF > /etc/httpd/conf/httpd.conf
 AddOutputFilterByType DEFLATE text/plain
 AddOutputFilterByType DEFLATE text/html
 AddOutputFilterByType DEFLATE text/xml
