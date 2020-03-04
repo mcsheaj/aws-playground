@@ -64,9 +64,6 @@ wget --no-cache -O /etc/httpd/conf.d/ssl.conf https://raw.githubusercontent.com/
 rm -rf /var/www/bak
 mkdir /var/www/bak
 
-echo "<?php phpinfo() ?>" > /var/www/html/info.php
-echo "<html><head><title>Coming Soon</title></head><body><h2>Coming Soon</h2></body></html>" > /var/www/intellipointsolutions.com/html/index.html
-
 # Get intellipoint wordpress files from S3 and move to /var/www/html
 BACKUP=$(aws s3api list-objects --bucket ${AWS_BUCKET} --prefix backup/intellipoint-hourly/intellipoint- --query "Contents[?contains(Key, '.tar.gz')] | reverse(sort_by(@, &LastModified)) | [0]" | jq .Key -r)
 aws s3 cp s3://${AWS_BUCKET}/${BACKUP} /tmp/intellipointsolutions.com.tar.gz
