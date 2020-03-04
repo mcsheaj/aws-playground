@@ -243,65 +243,6 @@ EOF
 # Lock down .htaccess
 chmod 660 /var/www/speasyforms.intellipointsolutions.com/html/.htaccess
 
-# Get rem.intellipoint files from S3 and move to /var/www/rem.intellipointsolutions.com
-BACKUP=$(aws s3api list-objects --bucket ${AWS_BUCKET} --prefix backup/rem-hourly/rem- --query "Contents[?contains(Key, '.tar.gz')] | reverse(sort_by(@, &LastModified)) | [0]" | jq .Key -r)
-aws s3 cp s3://${AWS_BUCKET}/${BACKUP} /tmp/rem.intellipointsolutions.com.tar.gz
-tar -xzf rem.intellipointsolutions.com.tar.gz
-rm -rf rem.intellipointsolutions.com.tar.gz
-DB_REM=$(echo ${DB_DATABASE} | sed 's/intellipoint_/rem_/')
-sed -i "s/define( *'DB_USER', '.*' *);/define( 'DB_USER', '${DB_USER}' );/" rem.intellipointsolutions.com/html/wp-config.php
-sed -i "s/define( *'DB_PASSWORD', '.*' *);/define( 'DB_PASSWORD', '${DB_PASSWORD}' );/" rem.intellipointsolutions.com/html/wp-config.php
-sed -i "s/define( *'DB_NAME', '.*' *);/define( 'DB_NAME', '${DB_REM}' );/" rem.intellipointsolutions.com/html/wp-config.php
-sed -i "s/define( *'DB_HOST', '.*' *);/define( 'DB_HOST', '${DB_SERVER}' );/" rem.intellipointsolutions.com/html/wp-config.php
-echo "<?php phpinfo() ?>" > rem.intellipointsolutions.com/html/info.php
-chown -R apache:apache rem.intellipointsolutions.com
-mv -f /var/www/rem.intellipointsolutions.com /var/www/bak | true
-mv -f rem.intellipointsolutions.com /var/www
-rm -rf rem.intellipointsolutions.com
-
-# Configure cache expiry for static content
-cat << EOF > /var/www/rem.intellipointsolutions.com/html/.htaccess
-# BEGIN WordPress
-<IfModule mod_rewrite.c>
-RewriteEngine On
-RewriteBase /
-RewriteRule ^index\.php$ - [L]
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule . /index.php [L]
-</IfModule>
-# END WordPress
-
-<IfModule mod_expires.c>
-ExpiresActive On
-
-# Images
-ExpiresByType image/jpeg "access plus 1 year"
-ExpiresByType image/gif "access plus 1 year"
-ExpiresByType image/png "access plus 1 year"
-ExpiresByType image/webp "access plus 1 year"
-ExpiresByType image/svg+xml "access plus 1 year"
-ExpiresByType image/x-icon "access plus 1 year"
-ExpiresByType image/x-icon "access 1 year"
-
-# Video
-ExpiresByType video/mp4 "access plus 1 year"
-ExpiresByType video/mpeg "access plus 1 year"
-
-# CSS, JavaScript
-ExpiresByType text/css "access plus 1 year"
-ExpiresByType text/javascript "access plus 1 year"
-ExpiresByType application/javascript "access plus 1 year"
-
-# Others
-ExpiresByType application/pdf "access plus 1 year"
-ExpiresByType application/x-shockwave-flash "access plus 1 year"
-</IfModule>
-EOF
-
-# Lock down .htaccess
-chmod 660 /var/www/rem.intellipointsolutions.com/html/.htaccess
-
 # Setup the backup script
 wget --no-cache -O /etc/cron.d/aws-wordpress-backup.cron https://raw.githubusercontent.com/mcsheaj/aws-playground/master/scripts/aws-wordpress-backup.cron
 chmod 600 /etc/cron.d/aws-wordpress-backup.cron
