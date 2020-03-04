@@ -80,6 +80,7 @@ mkdir /var/www/bak
 
 echo "<?php phpinfo() ?>" > /var/www/html/info.php
 echo "<html><head><title>Coming Soon</title></head><body><h2>Coming Soon</h2></body></html>" > /var/www/html/index.html
+chown -R apache:apache /var/www/html
 
 # Get intellipoint wordpress files from S3 and move to /var/www/html
 BACKUP=$(aws s3api list-objects --bucket ${AWS_BUCKET} --prefix backup/intellipoint-hourly/intellipoint- --query "Contents[?contains(Key, '.tar.gz')] | reverse(sort_by(@, &LastModified)) | [0]" | jq .Key -r)
@@ -91,10 +92,50 @@ sed -i "s/define( *'DB_PASSWORD', '.*' *);/define( 'DB_PASSWORD', '${DB_PASSWORD
 sed -i "s/define( *'DB_NAME', '.*' *);/define( 'DB_NAME', '${DB_DATABASE}' );/" intellipointsolutions.com/html/wp-config.php
 sed -i "s/define( *'DB_HOST', '.*' *);/define( 'DB_HOST', '${DB_SERVER}' );/" intellipointsolutions.com/html/wp-config.php
 echo "<?php phpinfo() ?>" > intellipointsolutions.com/html/info.php
-chown -R apache:apache intellipointsolutions.com
 mv -f /var/www/intellipointsolutions.com /var/www/bak | true
 mv -f intellipointsolutions.com /var/www
 rm -rf intellipointsolutions.com
+
+# Configure cache expiry for static content
+cat << EOF > /var/www/intellipointsolutions.com/html/.htaccess
+# BEGIN WordPress
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteBase /
+RewriteRule ^index\.php$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.php [L]
+</IfModule>
+# END WordPress
+<IfModule mod_expires.c>
+ExpiresActive On
+# Images
+ExpiresByType image/jpeg "access plus 1 year"
+ExpiresByType image/gif "access plus 1 year"
+ExpiresByType image/png "access plus 1 year"
+ExpiresByType image/webp "access plus 1 year"
+ExpiresByType image/svg+xml "access plus 1 year"
+ExpiresByType image/x-icon "access plus 1 year"
+ExpiresByType image/x-icon "access 1 year"
+# Video
+ExpiresByType video/mp4 "access plus 1 year"
+ExpiresByType video/mpeg "access plus 1 year"
+# CSS, JavaScript
+ExpiresByType text/css "access plus 1 year"
+ExpiresByType text/javascript "access plus 1 year"
+ExpiresByType application/javascript "access plus 1 year"
+# Others
+ExpiresByType application/pdf "access plus 1 year"
+ExpiresByType application/x-shockwave-flash "access plus 1 year"
+</IfModule>
+EOF
+
+# Lock down .htaccess
+chmod 660 /var/www/intellipointsolutions.com/html/.htaccess
+
+# Set owner on web root folder and contents
+chown -R apache:apache /var/www/intellipointsolutions.com
 
 # Get joemcshea.intellipoint files from S3 and move to /var/www/joemcshea.intellipointsolutions.com
 BACKUP=$(aws s3api list-objects --bucket ${AWS_BUCKET} --prefix backup/joemcshea-hourly/joemcshea- --query "Contents[?contains(Key, '.tar.gz')] | reverse(sort_by(@, &LastModified)) | [0]" | jq .Key -r)
@@ -107,10 +148,50 @@ sed -i "s/define( *'DB_PASSWORD', '.*' *);/define( 'DB_PASSWORD', '${DB_PASSWORD
 sed -i "s/define( *'DB_NAME', '.*' *);/define( 'DB_NAME', '${DB_JOEMCSHEA}' );/" joemcshea.intellipointsolutions.com/html/wp-config.php
 sed -i "s/define( *'DB_HOST', '.*' *);/define( 'DB_HOST', '${DB_SERVER}' );/" joemcshea.intellipointsolutions.com/html/wp-config.php
 echo "<?php phpinfo() ?>" > joemcshea.intellipointsolutions.com/html/info.php
-chown -R apache:apache joemcshea.intellipointsolutions.com
 mv -f /var/www/joemcshea.intellipointsolutions.com /var/www/bak | true
 mv -f joemcshea.intellipointsolutions.com /var/www
 rm -rf joemcshea.intellipointsolutions.com
+
+# Configure cache expiry for static content
+cat << EOF > /var/www/joemcshea.intellipointsolutions.com/html/.htaccess
+# BEGIN WordPress
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteBase /
+RewriteRule ^index\.php$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.php [L]
+</IfModule>
+# END WordPress
+<IfModule mod_expires.c>
+ExpiresActive On
+# Images
+ExpiresByType image/jpeg "access plus 1 year"
+ExpiresByType image/gif "access plus 1 year"
+ExpiresByType image/png "access plus 1 year"
+ExpiresByType image/webp "access plus 1 year"
+ExpiresByType image/svg+xml "access plus 1 year"
+ExpiresByType image/x-icon "access plus 1 year"
+ExpiresByType image/x-icon "access 1 year"
+# Video
+ExpiresByType video/mp4 "access plus 1 year"
+ExpiresByType video/mpeg "access plus 1 year"
+# CSS, JavaScript
+ExpiresByType text/css "access plus 1 year"
+ExpiresByType text/javascript "access plus 1 year"
+ExpiresByType application/javascript "access plus 1 year"
+# Others
+ExpiresByType application/pdf "access plus 1 year"
+ExpiresByType application/x-shockwave-flash "access plus 1 year"
+</IfModule>
+EOF
+
+# Lock down .htaccess
+chmod 660 /var/www/joemcshea.intellipointsolutions.com/html/.htaccess
+
+# Set owner on web root folder and contents
+chown -R apache:apache /var/www/joemcshea.intellipointsolutions.com
 
 # Get speasyforms.intellipoint files from S3 and move to /var/www/speasyforms.intellipointsolutions.com
 BACKUP=$(aws s3api list-objects --bucket ${AWS_BUCKET} --prefix backup/speasyforms-hourly/speasyforms- --query "Contents[?contains(Key, '.tar.gz')] | reverse(sort_by(@, &LastModified)) | [0]" | jq .Key -r)
@@ -127,6 +208,47 @@ chown -R apache:apache speasyforms.intellipointsolutions.com
 mv -f /var/www/speasyforms.intellipointsolutions.com /var/www/bak | true
 mv -f speasyforms.intellipointsolutions.com /var/www
 rm -rf speasyforms.intellipointsolutions.com
+
+# Configure cache expiry for static content
+cat << EOF > /var/www/speasyforms.intellipointsolutions.com/html/.htaccess
+# BEGIN WordPress
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteBase /
+RewriteRule ^index\.php$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.php [L]
+</IfModule>
+# END WordPress
+<IfModule mod_expires.c>
+ExpiresActive On
+# Images
+ExpiresByType image/jpeg "access plus 1 year"
+ExpiresByType image/gif "access plus 1 year"
+ExpiresByType image/png "access plus 1 year"
+ExpiresByType image/webp "access plus 1 year"
+ExpiresByType image/svg+xml "access plus 1 year"
+ExpiresByType image/x-icon "access plus 1 year"
+ExpiresByType image/x-icon "access 1 year"
+# Video
+ExpiresByType video/mp4 "access plus 1 year"
+ExpiresByType video/mpeg "access plus 1 year"
+# CSS, JavaScript
+ExpiresByType text/css "access plus 1 year"
+ExpiresByType text/javascript "access plus 1 year"
+ExpiresByType application/javascript "access plus 1 year"
+# Others
+ExpiresByType application/pdf "access plus 1 year"
+ExpiresByType application/x-shockwave-flash "access plus 1 year"
+</IfModule>
+EOF
+
+# Lock down .htaccess
+chmod 660 /var/www/speasyforms.intellipointsolutions.com/html/.htaccess
+
+# Set owner on web root folder and contents
+chown -R apache:apache /var/www/speasyforms.intellipointsolutions.com
 
 # Setup the backup script
 wget --no-cache -O /etc/cron.d/aws-wordpress-backup.cron https://raw.githubusercontent.com/mcsheaj/aws-playground/master/scripts/aws-wordpress-backup.cron
