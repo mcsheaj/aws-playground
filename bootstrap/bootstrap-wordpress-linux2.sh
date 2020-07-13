@@ -50,7 +50,7 @@ DB_SERVER=$(awk -F "=" '/DB_SERVER/ {print $2}' /root/.aws/bootstrap.properties)
 amazon-linux-extras install -y lamp-mariadb10.2-php7.2 php7.2
 
 # Install php-xml
-yum install -y php-xml.*
+yum install -y php-xml.* php-mbstring.*
 
 # Generate self-signed certificate
 cd /etc/pki/tls/certs
