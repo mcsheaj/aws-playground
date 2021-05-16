@@ -257,6 +257,22 @@ wget --no-cache -O /sbin/aws-wordpress-backup.sh https://raw.githubusercontent.c
 chmod 700 /sbin/aws-wordpress-backup.sh 
 systemctl restart crond
 
+# Disable php7.2 and enable php7.4 in amazon-linux-extras
+amazon-linux-extras disable php7.2
+amazon-linux-extras disable lamp-mariadb10.2-php7.2
+amazon-linux-extras enable php7.4
+yum clean metadata 
+
+# Stop the php FastCGI Process Manager (created/started by the LAMP package for php7.2)
+systemctl stop php-fpm
+
+# Remove php7.2 and install php 7.4
+yum remove php* -y
+yum install php php-cli php-common php-fpm php-json php-mbstring php-mysqlnd php-pdo php-xml php-gd -y
+
+# Start the php FastCGI Process Manager (now php7.4)
+systemctl start php-fpm
+
 # Start the httpd service and configure it to start on boot
 systemctl enable httpd
 systemctl start httpd
