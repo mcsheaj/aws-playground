@@ -132,7 +132,7 @@ ExpiresByType application/x-shockwave-flash "access plus 1 year"
 EOF
 
 # Lock down .htaccess
-chmod 660 /var/www/intellipointsolutions.com/html/.htaccess
+chmod 644 /var/www/intellipointsolutions.com/html/.htaccess
 
 # Set owner on web root folder and contents
 chown -R apache:apache /var/www/intellipointsolutions.com
@@ -188,7 +188,7 @@ ExpiresByType application/x-shockwave-flash "access plus 1 year"
 EOF
 
 # Lock down .htaccess
-chmod 660 /var/www/joemcshea.intellipointsolutions.com/html/.htaccess
+chmod 644 /var/www/joemcshea.intellipointsolutions.com/html/.htaccess
 
 # Set owner on web root folder and contents
 chown -R apache:apache /var/www/joemcshea.intellipointsolutions.com
