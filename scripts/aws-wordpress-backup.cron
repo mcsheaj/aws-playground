@@ -18,7 +18,7 @@
 27 * * * * root /sbin/aws-wordpress-backup.sh --src-dir /var/www/joemcshea.intellipointsolutions.com --prefix joemcshea --interval hourly --retain 4 >> /var/log/aws-wordpress-backup.cron.log 2>&1
 42 * * * * root /sbin/aws-wordpress-backup.sh --src-dir /var/www/speasyforms.intellipointsolutions.com --prefix speasyforms --interval hourly --retain 4 >> /var/log/aws-wordpress-backup.cron.log 2>&1
 
-# run daily backups on all 3 wordpress sites (keep 4 hours worth)
+# run daily backups on all 3 wordpress sites (keep 4 days worth)
 7 5 * * * root /sbin/aws-wordpress-backup.sh --src-dir /var/www/intellipointsolutions.com --prefix intellipoint --interval daily --retain 4 >> /var/log/aws-wordpress-backup.cron.log 2>&1
 22 5 * * * root /sbin/aws-wordpress-backup.sh --src-dir /var/www/joemcshea.intellipointsolutions.com --prefix joemcshea --interval daily --retain 4 >> /var/log/aws-wordpress-backup.cron.log 2>&1
 37 5 * * * root /sbin/aws-wordpress-backup.sh --src-dir /var/www/speasyforms.intellipointsolutions.com --prefix speasyforms --interval daily --retain 4 >> /var/log/aws-wordpress-backup.cron.log 2>&1
