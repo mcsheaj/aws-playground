@@ -270,6 +270,9 @@ systemctl stop php-fpm
 yum remove php* -y
 yum install php php-cli php-common php-fpm php-json php-mbstring php-mysqlnd php-pdo php-xml php-gd -y
 
+# Copy up our php.ini
+aws s3 cp s3://${dst}/backup/php.ini /etc/php.ini
+
 # Start the php FastCGI Process Manager (now php7.4)
 systemctl start php-fpm
 
