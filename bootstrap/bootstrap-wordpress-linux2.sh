@@ -112,7 +112,6 @@ cat << EOF > /var/www/intellipointsolutions.com/html/.htaccess
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteRule . /index.php [L]
 </IfModule>
-
 # END WordPress
 
 <IfModule mod_expires.c>
@@ -175,38 +174,45 @@ cat << EOF > /var/www/joemcshea.intellipointsolutions.com/html/.htaccess
 # dynamically generated, and should only be modified via WordPress filters.
 # Any changes to the directives between these markers will be overwritten.
 <IfModule mod_rewrite.c>
-RewriteEngine On
-RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
-RewriteBase /
-RewriteRule ^index\.php$ - [L]
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule . /index.php [L]
+    RewriteEngine On
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+    RewriteBase /
+    RewriteRule ^index\.php$ - [L]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule . /index.php [L]
 </IfModule>
-
 # END WordPress
 
 <IfModule mod_expires.c>
-ExpiresActive On
-# Images
-ExpiresByType image/jpeg "access plus 1 year"
-ExpiresByType image/gif "access plus 1 year"
-ExpiresByType image/png "access plus 1 year"
-ExpiresByType image/webp "access plus 1 year"
-ExpiresByType image/svg+xml "access plus 1 year"
-ExpiresByType image/x-icon "access plus 1 year"
-ExpiresByType image/x-icon "access 1 year"
-# Video
-ExpiresByType video/mp4 "access plus 1 year"
-ExpiresByType video/mpeg "access plus 1 year"
-# CSS, JavaScript
-ExpiresByType text/css "access plus 1 year"
-ExpiresByType text/javascript "access plus 1 year"
-ExpiresByType application/javascript "access plus 1 year"
-# Others
-ExpiresByType application/pdf "access plus 1 year"
-ExpiresByType application/x-shockwave-flash "access plus 1 year"
+    ExpiresActive On
+    # Images
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType image/x-icon "access plus 1 year"
+    ExpiresByType image/x-icon "access 1 year"
+    # Video
+    ExpiresByType video/mp4 "access plus 1 year"
+    ExpiresByType video/mpeg "access plus 1 year"
+    # CSS, JavaScript
+    ExpiresByType text/css "access plus 1 year"
+    ExpiresByType text/javascript "access plus 1 year"
+    ExpiresByType application/javascript "access plus 1 year"
+    # Others
+    ExpiresByType application/pdf "access plus 1 year"
+    ExpiresByType application/x-shockwave-flash "access plus 1 year"
 </IfModule>
+
+<ifmodule mod_headers.c>
+    Header always set strict-transport-security "max-age=31536000; includeSubDomains; preload"
+    Header always set content-security-policy "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://s1.wp.com/ https://s0.wp.com/ https://stats.wp.com/ https://www.recaptcha.net/ https://www.gstatic.com/ https://www.google.com/; img-src 'self' data: https://i2.wp.com/ https://i1.wp.com/ https://i0.wp.com/ https://pixel.wp.com/ https://pixel.wp.com/ https://secure.gravatar.com/; object-src 'self' data: https://www.google.com/; frame-src 'self' data: https://www.google.com/;"
+    Header always set x-frame-options deny
+    Header always set x-content-type-options nosniff
+    Header always set x-xss-protection 1
+</ifmodule>
 EOF
 
 # Lock down .htaccess
@@ -233,37 +239,51 @@ rm -rf speasyforms.intellipointsolutions.com
 
 # Configure cache expiry for static content
 cat << EOF > /var/www/speasyforms.intellipointsolutions.com/html/.htaccess
+
 # BEGIN WordPress
+# The directives (lines) between "BEGIN WordPress" and "END WordPress" are
+# dynamically generated, and should only be modified via WordPress filters.
+# Any changes to the directives between these markers will be overwritten.
 <IfModule mod_rewrite.c>
-RewriteEngine On
-RewriteBase /
-RewriteRule ^index\.php$ - [L]
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule . /index.php [L]
+    RewriteEngine On
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+    RewriteBase /
+    RewriteRule ^index\.php$ - [L]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule . /index.php [L]
 </IfModule>
 # END WordPress
+
 <IfModule mod_expires.c>
-ExpiresActive On
-# Images
-ExpiresByType image/jpeg "access plus 1 year"
-ExpiresByType image/gif "access plus 1 year"
-ExpiresByType image/png "access plus 1 year"
-ExpiresByType image/webp "access plus 1 year"
-ExpiresByType image/svg+xml "access plus 1 year"
-ExpiresByType image/x-icon "access plus 1 year"
-ExpiresByType image/x-icon "access 1 year"
-# Video
-ExpiresByType video/mp4 "access plus 1 year"
-ExpiresByType video/mpeg "access plus 1 year"
-# CSS, JavaScript
-ExpiresByType text/css "access plus 1 year"
-ExpiresByType text/javascript "access plus 1 year"
-ExpiresByType application/javascript "access plus 1 year"
-# Others
-ExpiresByType application/pdf "access plus 1 year"
-ExpiresByType application/x-shockwave-flash "access plus 1 year"
+    ExpiresActive On
+    # Images
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/webp "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType image/x-icon "access plus 1 year"
+    ExpiresByType image/x-icon "access 1 year"
+    # Video
+    ExpiresByType video/mp4 "access plus 1 year"
+    ExpiresByType video/mpeg "access plus 1 year"
+    # CSS, JavaScript
+    ExpiresByType text/css "access plus 1 year"
+    ExpiresByType text/javascript "access plus 1 year"
+    ExpiresByType application/javascript "access plus 1 year"
+    # Others
+    ExpiresByType application/pdf "access plus 1 year"
+    ExpiresByType application/x-shockwave-flash "access plus 1 year"
 </IfModule>
+
+<ifmodule mod_headers.c>
+    Header always set strict-transport-security "max-age=31536000; includeSubDomains; preload"
+    Header always set content-security-policy "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://s1.wp.com/ https://s0.wp.com/ https://stats.wp.com/ https://www.recaptcha.net/ https://www.gstatic.com/ https://www.google.com/; img-src 'self' data: https://i2.wp.com/ https://i1.wp.com/ https://i0.wp.com/ https://pixel.wp.com/ https://pixel.wp.com/ https://secure.gravatar.com/; object-src 'self' data: https://www.google.com/; frame-src 'self' data: https://www.google.com/;"
+    Header always set x-frame-options deny
+    Header always set x-content-type-options nosniff
+    Header always set x-xss-protection 1
+</ifmodule>
 EOF
 
 # Lock down .htaccess
