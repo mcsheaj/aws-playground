@@ -98,7 +98,6 @@ rm -rf intellipointsolutions.com
 
 # Configure cache expiry for static content
 cat << EOF > /var/www/intellipointsolutions.com/html/.htaccess
-
 # BEGIN WordPress
 # The directives (lines) between "BEGIN WordPress" and "END WordPress" are
 # dynamically generated, and should only be modified via WordPress filters.
@@ -113,7 +112,6 @@ cat << EOF > /var/www/intellipointsolutions.com/html/.htaccess
     RewriteRule . /index.php [L]
 </IfModule>
 # END WordPress
-
 <IfModule mod_expires.c>
     ExpiresActive On
     # Images
@@ -135,10 +133,9 @@ cat << EOF > /var/www/intellipointsolutions.com/html/.htaccess
     ExpiresByType application/pdf "access plus 1 year"
     ExpiresByType application/x-shockwave-flash "access plus 1 year"
 </IfModule>
-
 <ifmodule mod_headers.c>
     Header always set strict-transport-security "max-age=31536000; includeSubDomains; preload"
-    Header always set content-security-policy "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://s1.wp.com/ https://s0.wp.com/ https://stats.wp.com/ https://www.recaptcha.net/ https://www.gstatic.com/ https://www.google.com/; img-src 'self' data: https://i2.wp.com/ https://i1.wp.com/ https://i0.wp.com/ https://pixel.wp.com/ https://pixel.wp.com/ https://secure.gravatar.com/; object-src 'self' data: https://www.google.com/; frame-src 'self' data: https://www.google.com/;"
+    Header always set content-security-policy "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://c1.wp.com https://c0.wp.com https://s1.wp.com/ https://s0.wp.com/ https://stats.wp.com/ https://www.recaptcha.net/ https://www.gstatic.com/ https://www.google.com/; img-src 'self' data: https://i2.wp.com/ https://i1.wp.com/ https://i0.wp.com/ https://pixel.wp.com/ https://pixel.wp.com/ https://secure.gravatar.com/; object-src 'self' data: https://www.google.com/; frame-src 'self' data: https://www.google.com/;"
     Header always set x-frame-options deny
     Header always set x-content-type-options nosniff
     Header always set x-xss-protection 1
@@ -168,7 +165,6 @@ rm -rf joemcshea.intellipointsolutions.com
 
 # Configure cache expiry for static content
 cat << EOF > /var/www/joemcshea.intellipointsolutions.com/html/.htaccess
-
 # BEGIN WordPress
 # The directives (lines) between "BEGIN WordPress" and "END WordPress" are
 # dynamically generated, and should only be modified via WordPress filters.
@@ -183,7 +179,6 @@ cat << EOF > /var/www/joemcshea.intellipointsolutions.com/html/.htaccess
     RewriteRule . /index.php [L]
 </IfModule>
 # END WordPress
-
 <IfModule mod_expires.c>
     ExpiresActive On
     # Images
@@ -205,10 +200,9 @@ cat << EOF > /var/www/joemcshea.intellipointsolutions.com/html/.htaccess
     ExpiresByType application/pdf "access plus 1 year"
     ExpiresByType application/x-shockwave-flash "access plus 1 year"
 </IfModule>
-
 <ifmodule mod_headers.c>
     Header always set strict-transport-security "max-age=31536000; includeSubDomains; preload"
-    Header always set content-security-policy "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://s1.wp.com/ https://s0.wp.com/ https://stats.wp.com/ https://www.recaptcha.net/ https://www.gstatic.com/ https://www.google.com/; img-src 'self' data: https://i2.wp.com/ https://i1.wp.com/ https://i0.wp.com/ https://pixel.wp.com/ https://pixel.wp.com/ https://secure.gravatar.com/; object-src 'self' data: https://www.google.com/; frame-src 'self' data: https://www.google.com/;"
+    Header always set content-security-policy "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://c1.wp.com https://c0.wp.com https://s1.wp.com/ https://s0.wp.com/ https://stats.wp.com/ https://www.recaptcha.net/ https://www.gstatic.com/ https://www.google.com/; img-src 'self' data: https://i2.wp.com/ https://i1.wp.com/ https://i0.wp.com/ https://pixel.wp.com/ https://pixel.wp.com/ https://secure.gravatar.com/; object-src 'self' data: https://www.google.com/; frame-src 'self' data: https://www.google.com/;"
     Header always set x-frame-options deny
     Header always set x-content-type-options nosniff
     Header always set x-xss-protection 1
@@ -239,7 +233,6 @@ rm -rf speasyforms.intellipointsolutions.com
 
 # Configure cache expiry for static content
 cat << EOF > /var/www/speasyforms.intellipointsolutions.com/html/.htaccess
-
 # BEGIN WordPress
 # The directives (lines) between "BEGIN WordPress" and "END WordPress" are
 # dynamically generated, and should only be modified via WordPress filters.
@@ -254,7 +247,6 @@ cat << EOF > /var/www/speasyforms.intellipointsolutions.com/html/.htaccess
     RewriteRule . /index.php [L]
 </IfModule>
 # END WordPress
-
 <IfModule mod_expires.c>
     ExpiresActive On
     # Images
@@ -276,10 +268,9 @@ cat << EOF > /var/www/speasyforms.intellipointsolutions.com/html/.htaccess
     ExpiresByType application/pdf "access plus 1 year"
     ExpiresByType application/x-shockwave-flash "access plus 1 year"
 </IfModule>
-
 <ifmodule mod_headers.c>
     Header always set strict-transport-security "max-age=31536000; includeSubDomains; preload"
-    Header always set content-security-policy "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://s1.wp.com/ https://s0.wp.com/ https://stats.wp.com/ https://www.recaptcha.net/ https://www.gstatic.com/ https://www.google.com/; img-src 'self' data: https://i2.wp.com/ https://i1.wp.com/ https://i0.wp.com/ https://pixel.wp.com/ https://pixel.wp.com/ https://secure.gravatar.com/; object-src 'self' data: https://www.google.com/; frame-src 'self' data: https://www.google.com/;"
+    Header always set content-security-policy "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://c1.wp.com https://c0.wp.com https://s1.wp.com/ https://s0.wp.com/ https://stats.wp.com/ https://www.recaptcha.net/ https://www.gstatic.com/ https://www.google.com/; img-src 'self' data: https://i2.wp.com/ https://i1.wp.com/ https://i0.wp.com/ https://pixel.wp.com/ https://pixel.wp.com/ https://secure.gravatar.com/; object-src 'self' data: https://www.google.com/; frame-src 'self' data: https://www.google.com/;"
     Header always set x-frame-options deny
     Header always set x-content-type-options nosniff
     Header always set x-xss-protection 1
