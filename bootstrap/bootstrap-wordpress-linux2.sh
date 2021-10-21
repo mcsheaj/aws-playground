@@ -132,6 +132,7 @@ cat << EOF > /var/www/intellipointsolutions.com/html/.htaccess
     # Others
     ExpiresByType application/pdf "access plus 1 year"
     ExpiresByType application/x-shockwave-flash "access plus 1 year"
+    ExpiresDefault "access plus 1 day"
 </IfModule>
 <ifmodule mod_headers.c>
     Header always set strict-transport-security "max-age=31536000; includeSubDomains; preload"
